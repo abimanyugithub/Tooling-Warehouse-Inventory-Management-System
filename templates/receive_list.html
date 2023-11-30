@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+</head>
+<body>
+<div class="container px-4 py-5">
+    <div class="container"><p><h2>{{ header }}</h2><p>
+        <hr class="hr" />
+        <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
+        &nbsp;<div class="vr"></div>&nbsp;
+        <a class="btn btn-link" href="{% url 'AddReceiving' %}">New TTB</a>
+        <hr class="hr" />
+        <!-- alert -->
+        {% if messages %}
+        {% for messages in messages %}
+        {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+        <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewReceiving' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+        <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewReceiving' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+        <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewReceiving' %}"></a></div>
+        {% endif %}
+        {% endfor %}
+        {% else %}<div id="alert"></div>
+        {% endif %}
+        <!-- alert -->
+        <div class="card mt-3 p-2">
+            <div class="card-header border-0">
+                <form name="myForm" action="{% url 'ResultReceiving' %}" method="GET" enctype="multipart/form-data">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tbody>
+                            <tr>
+                                <td>
+                                    <span class="h-formfield-uppercase">
+                                        <input class="form-control shadow-none" type="text" id="no_ttb" name="no_ttb" placeholder="No. TTB" />
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="h-formfield-uppercase">
+                                        <input class="form-control shadow-none" type="text" id="prod_code" name="prod_code" placeholder="No. Product" />
+                                    </span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <div class="hstack gap-1">
+                            <button class="btn btn-primary btn-sm px-3" type="submit">Search</button>
+                            <a class="btn btn-secondary btn-sm px-3" href="{% url 'ViewReceiving' %}">Reset</a>
+                        </div>
+                    </div>
+                </form>
+                <hr class="hr" />
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <caption>
+                            {% if object_list.has_other_pages %}
+                            <ul class="pagination justify-content-center pagination-sm">
+                                {% if object_list.has_previous %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page=1&no_ttb={{ request.GET.no_ttb }}&prod_code={{ request.GET.prod_code }}">First page</a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.previous_page_number }}&no_ttb={{ request.GET.no_ttb }}&prod_code={{ request.GET.prod_code }}">
+                                    <span aria-hidden="true">&laquo;</span></a></li>
+                                {% endif %} {% for num in object_list.paginator.page_range %} {% if object_list.number == num %}
+                                <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span> </li>
+                                {% elif num > object_list.number|add:'-3' and num < object_list.number|add:'3' %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ num }}&no_ttb={{ request.GET.no_ttb }}&prod_code={{ request.GET.prod_code }}">{{ num }}</a></li>
+                                {% endif %} {% endfor %} {% if object_list.has_next %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.next_page_number }}&no_ttb={{ request.GET.no_ttb }}&prod_code={{ request.GET.prod_code }}">
+                                    <span aria-hidden="true">&raquo;</span></a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.paginator.num_pages }}&no_ttb={{ request.GET.no_ttb }}&prod_code={{ request.GET.prod_code }}">Last page</a> </li>
+                                {% endif %}
+                            </ul>
+                            {% endif %}
+                            <!-- end pagination -->
+                        </caption>
+                        <thead>{% if object_list %}
+                            <tr class="table-secondary">
+                                <th>No.</th>
+                                <th style="width: 15%;">No. TTB</th>
+                                <th>No. Product</th>
+                                <th>Product Description</th>
+                                <th>Qty. TTB</th>
+                                <th>Created Date</th>
+                                <th style="width: 15%;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>{% for data in object_list %}
+                            <tr>
+                                <td class="border-end" >{% if page_obj %}
+                                {{ page_obj.start_index|add:forloop.counter0 }}
+                                {% else %}
+                                {{ object_list.start_index|add:forloop.counter0 }}
+                                {% endif %}
+                                </td>
+                                <td>{{ data.no_ttb }}</td>
+                                <td>{{ data.prod_code_id }}</td>
+                                <td>{{ data.prod_code.prod_desc }}</td>
+                                <td>{{ data.ttb_qty }}</td>
+                                <td>{{ data.date_created|date:"d/m/Y" }} {{ data.date_created|date:"H:i" }}</td>
+                                <td><a class="btn btn-primary btn-sm px-3" href="{% url 'UpdateReceiving' data.id %}">Edit</a></td>
+                            </tr>{% endfor %}
+                        </tbody>{% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+$("form[name=myForm]").submit(function() {
+    if ($("#no_ttb").val() == "" && $("#prod_code").val() == ""){
+        $("#alert").html("<div class='alert alert-warning border-0' role='alert'>Fill the form to be submitted.</div>");
+        return false;
+    }
+});
+</script>
+</html>

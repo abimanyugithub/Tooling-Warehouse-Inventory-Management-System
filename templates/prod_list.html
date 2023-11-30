@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'assets/fontawesome/css/all.css' %}">
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+</head>
+<body>
+<div class="container px-4 py-5">
+    <div class="container"><p><h2>{{ header }}</h2><p>
+        <hr class="hr" />
+        <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
+        &nbsp;<div class="vr"></div>&nbsp;
+        <a class="btn btn-link" href="{% url 'AddProduct' %}">New Product</a>
+        <hr class="hr" />
+        <!-- alert -->
+        {% if messages %}
+        {% for messages in messages %}
+        {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+        <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewProduct' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+        <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewProduct' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+        <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewProduct' %}"></a></div>
+        {% endif %}
+        {% endfor %}
+        {% else %}<div id="alert"></div>
+        {% endif %}
+        <!-- alert -->
+        <div class="card p-2"><!-- <div class="card shadow"> -->
+            <div class="card-header border-0">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <caption>Summary</caption>
+                        <tbody class="table-light">
+                        <tr>
+                            <td>
+                                <div class="hstack gap-1">Total: {{ total }}
+                                    <div class="ms-auto"><span style='color:#33b5e5'>
+                                    <i class="fa fa-circle"></i></span> Active: {{ active }} ({{ active_cent|floatformat:0 }}%)</div>
+                                    &nbsp;<div class="vr"></div>&nbsp;<span style='color:#7283a7'>
+                                    <i class="fa fa-circle"></i></span> Blocked: {{ block }} ({{ block_cent|floatformat:0 }}%)
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="card mt-3 p-2">
+            <div class="card-header border-0">
+                <form name="myForm" action="{% url 'ResultProduct' %}" method="GET" enctype="multipart/form-data">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tbody>
+                            <tr>
+                                <td>
+                                    <span class="h-formfield-uppercase">
+                                        <input class="form-control shadow-none" type="text" id="no_loc" name="no_loc" placeholder="No. Location" />
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="h-formfield-uppercase">
+                                        <input class="form-control shadow-none" type="text" id="prod_code" name="prod_code" placeholder="No. Product" />
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="h-formfield-uppercase">
+                                        <input class="form-control shadow-none" type="text" id="prod_desc" name="prod_desc" placeholder="Product Desc." />
+                                    </span>
+                                </td>
+                                <td>
+                                    <select class="form-select shadow-none fw-bold" name="status">
+                                        <option value="" disabled selected hidden>Status</option>
+                                        <option value="">ALL</option>
+                                        <option disabled>{{ value|default:"---" }}</option>
+                                        <option value="ACTIVE">ACTIVE</option>
+                                        <option value="BLOCK">BLOCKED</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <div class="hstack gap-1">
+                            <button class="btn btn-primary btn-sm px-3" type="submit">Search</button>
+                            <a class="btn btn-secondary btn-sm px-3" href="{% url 'ViewProduct' %}">Reset</a>
+                        </div>
+                    </div>
+                </form>
+                <hr class="hr" />
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <caption><!-- pagination before result -->
+                            {% if page_obj.has_other_pages %}
+                            <ul class="pagination justify-content-center pagination-sm">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page=1">First page</a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ page_obj.previous_page_number }}">
+                                    <span aria-hidden="true">&laquo;</span></a></li>
+                                {% endif %} {% for num in page_obj.paginator.page_range %} {% if page_obj.number == num %}
+                                <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span> </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ num }}">{{ num }}</a></li>
+                                {% endif %} {% endfor %} {% if page_obj.has_next %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ page_obj.next_page_number }}"><span aria-hidden="true">&raquo;</span></a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ page_obj.paginator.num_pages }}">Last page</a> </li>
+                                {% endif %}
+                            </ul><!-- end pagination -->
+                            <!-- pagination after result-->
+                            {% elif object_list.has_other_pages %}
+                            <ul class="pagination justify-content-center pagination-sm">
+                                {% if object_list.has_previous %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page=1&q={{ request.GET.q }}&status={{ request.GET.status }}">First page</a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.previous_page_number }}&q={{ request.GET.q }}&status={{ request.GET.status }}">
+                                    <span aria-hidden="true">&laquo;</span></a></li>
+                                {% endif %} {% for num in object_list.paginator.page_range %} {% if object_list.number == num %}
+                                <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span> </li>
+                                {% elif num > object_list.number|add:'-3' and num < object_list.number|add:'3' %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ num }}&q={{ request.GET.q }}&status={{ request.GET.status }}">{{ num }}</a></li>
+                                {% endif %} {% endfor %} {% if object_list.has_next %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.next_page_number }}&q={{ request.GET.q }}&status={{ request.GET.status }}">
+                                    <span aria-hidden="true">&raquo;</span></a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.paginator.num_pages }}&q={{ request.GET.q }}&status={{ request.GET.status }}">Last page</a> </li>
+                                {% endif %}
+                            </ul>
+                            {% endif %}
+                            <!-- end pagination -->
+                        </caption>
+                        <thead>
+                            <tr class="table-secondary">
+                                <th style="width: 5%;">No.</th>
+                                <th colspan="2">No. Location</th>
+                                <th style="width: 15%;">No. Product</th>
+                                <th>Product Description</th>
+                                <!--<th>Supplier</th>
+                                <th>Min. Stock</th>
+                                <th>Max. Stock</th>
+                                <th>Lead Time (Days)</th> -->
+                                <th>Pack</th>
+                                <th>Status</th>
+                                <th style="width: 15%;">Action</th>
+                            </tr>
+                        </thead>{% if object_list %}
+                        <tbody>{% for data in object_list %}
+                            <tr>
+                                <td class="border-end" >
+                                    {% if page_obj %}
+                                    {{ page_obj.start_index|add:forloop.counter0 }}
+                                    {% else %}
+                                    {{ object_list.start_index|add:forloop.counter0 }}
+                                    {% endif %}
+                                </td>
+                                {% if data.no_loc_id == None %}
+                                <td style="width: 7%;">{{ value|default:"--" }}</td>
+                                <td class="border-end" >{% if data.prod_code.status == 'ACTIVE' %}<a class="text-primary" href="{% url 'EditNewline' data.id %}"><i class="fa fa-pencil"></i></a>
+                                    {% else %} -- {% endif %}
+                                </td>
+                                {% else %}
+                                <td style="width: 7%;">{{ data.no_loc_id }}</td>
+                                <td class="border-end" >
+                                    <a class="text-danger" data-bs-toggle="modal" data-bs-target="#id-{{ data.id }}"><i class="fa fa-trash"></i></a>
+
+                                    <!-- Modal -->
+                                    <div class="modal fade" id="id-{{ data.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h1 class="modal-title fs-5" id="exampleModalLabel"><i class="fa fa-info-circle" style="color:#243c64;"></i>
+                                                                    &nbsp;Delete product location?</h1>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    {{ data.no_loc_id }}
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <form method="POST" action="{% url 'DeleteNewline' data.id %}" enctype="multipart/form-data">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" value="NEW" name="remark" />
+                                                        <input class="btn btn-danger" type="submit" value="Delete">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </td>
+                                {% endif %}
+                                <td>{{ data.prod_code_id }}</td>
+                                <td>{{ data.prod_code.prod_desc }}</td>
+                                <td>{{ data.prod_code.pack_size }}</td>
+                                <!-- <td>{{data.supplier}}</td>
+                                <td>{{data.stock_min}}</td>
+                                <td>{{data.stock_max}}</td>
+                                <td>{{data.l_time_days}}</td> -->
+                                {% if data.prod_code.status == 'ACTIVE' %}<td>{{ value|default:"Active" }}</td>{% else %}
+                                <td>{{ value|default:"Blocked" }}</td>{% endif %}
+                                <td>
+                                    <!-- <div class="hstack gap-1"> -->
+                                    <a class="btn btn-primary btn-sm px-3" href="{% url 'EditProduct' data.prod_code_id %}">Edit</a>
+                                       <!-- &nbsp;<div class="vr"></div>&nbsp; -->
+                                    <a class="btn btn-secondary btn-sm px-2" href="{% url 'DetailProduct' data.prod_code_id %}">Detail</a>
+                                    <!-- </div> -->
+                                </td>
+                            </tr>{% endfor %}{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+$("form[name=myForm]").submit(function() {
+    if (($("#no_loc").val() == "" && $("#prod_code").val() == "" && $("#prod_desc").val() == "") && !$("select").val()){
+        $("#alert").html("<div class='alert alert-warning border-0' role='alert'>Fill the form to be submitted.</div>");
+        return false;
+    }
+});
+</script>
+<script>
+// fungsi disable/enable input when select option
+$("select").change(function() {
+    if ($(this).val() == 0 || $(this).val() ) {
+        $("input").val('').attr("disabled", true);
+    } else {
+        $("input").removeAttr("disabled");
+    }
+}).trigger("change");
+</script>
+<script>
+// fungsi disable/enable select when input fill
+$("#no_loc").change(function() {
+    // If the element *has* a value
+    if ($(this).val()) {
+        // Should also perform validation here
+        $("select").attr("disabled", true);
+        $("#prod_code").attr("disabled", true);
+        $("#prod_desc").attr("disabled", true);
+    }
+    // If the element doesn't have a value
+    else {
+        // Clear the value of all next steps and disable
+        $("select").removeAttr("disabled");
+    }
+});
+</script>
+<script>
+// fungsi disable/enable select when input prod_code fill
+$("#prod_code").change(function() {
+    // If the element *has* a value
+    if ($(this).val()) {
+        // Should also perform validation here
+        $("select").attr("disabled", true);
+        $("#no_loc").attr("disabled", true);
+        $("#prod_desc").attr("disabled", true);
+    }
+    // If the element doesn't have a value
+    else {
+        // Clear the value of all next steps and disable
+        $("select").removeAttr("disabled");
+    }
+});
+</script>
+<script>
+// fungsi disable/enable select when input prod_desc fill
+$("#prod_desc").change(function() {
+    // If the element *has* a value
+    if ($(this).val()) {
+        // Should also perform validation here
+        $("select").attr("disabled", true);
+        $("#no_loc").attr("disabled", true);
+        $("#prod_code").attr("disabled", true);
+    }
+    // If the element doesn't have a value
+    else {
+        // Clear the value of all next steps and disable
+        $("select").removeAttr("disabled");
+    }
+});
+</script>
+</html>

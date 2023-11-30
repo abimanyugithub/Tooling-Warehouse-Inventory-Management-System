@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'assets/fontawesome/css/all.css' %}">
+    <title>{{ title }}</title>
+</head>
+<body>
+    <div class="container px-4 py-5">
+        <div class="container"><p><h2>{{ header }}</h2><p>
+            <hr class="hr" />
+            <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
+            &nbsp;<div class="vr"></div>&nbsp;
+            <a class="btn btn-link" href="{% url 'AddLocation' %}">New Location</a>
+            &nbsp;<div class="vr"></div>&nbsp;
+            <a class="btn btn-link" href="{% url 'ViewLocation' %}">List Locations</a>
+            <hr class="hr" />
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="card p-2"><!-- <div class="card shadow"> -->
+                    <div class="card-header border-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-primary">
+                                    <tr><th>No.</th>
+                                        <th>No. Location</th>
+                                        <th>Assign</th>
+                                        <th>Storage</th>
+                                        <th>Tooling Area Part</th>
+                                        <th>Status</th>
+                                        <th style="width: 13%;">ACTION</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>{{ value|default:"--" }}</td>
+                                        <td>{{ data.no_loc }}</td>
+                                        <td>{% if data.status == "FL" %}
+                                            <select class="form-select form-select-sm shadow-none" id="assign" name="assign" onchange="MyFunction()">
+                                                <option disabled>{{ value|default:"---" }}</option>
+                                                <option value="P">P - PRIMARY LOC.</option>
+                                                <option value="R">R - RESERVE LOC.</option>
+                                            </select>
+                                            {% else %} <!-- selain free lokasi  tidak dapat ubah assign -->
+                                                <input type="hidden" value="{{ data.assign }}" name="assign" />{{ data.assign }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{% if data.status == "FL" %}
+                                            <select class="form-select form-select-sm shadow-none" name="storage">
+                                                <option disabled>{{ value|default:"---" }}</option>
+                                                <option value="CT">CT - CABINET</option>
+                                                <option value="CC">CC - CABINET (CHEMICAL)</option>
+                                                <option value="FR">FR - FLOOR</option>
+                                                <option value="RK">RK - RACK</option>
+                                            </select>
+                                            {% else %} <!-- selain free lokasi  tidak dapat ubah storage -->
+                                                <input type="hidden" value="{{ data.storage }}" name="storage" />
+                                                {% if data.storage == "CT" %}CABINET{% elif data.storage == "CC" %}CABINET (CHEMICAL){% elif data.storage == "FR" %}FLOOR{% else %}RACK{% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td>{% if data.status == "FL" %}
+                                            <select class="form-select form-select-sm shadow-none" name="area">
+                                                <option disabled>{{ value|default:"---" }}</option>
+                                                <option value="BL">BL - BLOW</option>
+                                                <option value="IN">IN - INJECTION</option>
+                                                <option value="CH">CH - CHEMICAL (MAINTENANCE)</option>
+                                                <option value="CE">CE - CONSUMABLE ELECTRICAL</option>
+                                                <option value="CM">CM - CONSUMABLE MECHANICAL</option>
+                                                <option value="VA">VA - VACUUM</option>
+                                            </select>
+                                            {% else %} <!-- selain free lokasi  tidak dapat ubah area -->
+                                                <input type="hidden" value="{{ data.area }}" name="area" />
+                                                {% if data.area == "BL" %}BLOW{% elif data.storage == "IN" %}INJECTION{% elif data.storage == "CH" %}CHEMICAL (MAINTENANCE){% elif data.storage == "CE" %}CONSUMABLE ELECTRICAL{% elif data.storage == "CM" %}CONSUMABLE MECHANICAL{% else %}VACUUM{% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td>{% if data.assign == "R" %}
+                                                {% if data.status == "HU" or data.status == "UL" %}
+                                            <select class="form-select form-select-sm shadow-none" name="status" >
+                                                <option disabled>{{ value|default:"---" }}</option>
+                                                <option value="UL">U - USED</option>
+                                                <option value="HU">H - HELD</option>
+                                            </select>
+                                                {% else %}
+                                            <input type="hidden" value="{{ data.status }}" name="status" />FREE
+                                                {% endif %}
+                                            {% elif data.assign == "P" %}
+                                            <input type="hidden" value="{{ data.status }}" name="status" />
+                                                {% if data.status == "FL" %}FREE{% else %}USED{% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <!-- <div class="hstack gap-1"> -->
+                                            <button class="btn btn-primary btn-sm px-3" id="MyBtn" type="submit">Save</button>
+                                            <!-- &nbsp;<div class="vr"></div>&nbsp; -->
+                                            <a class="btn btn-secondary btn-sm px-2" href="{% url 'ResultLocation' %}?no_loc={{ data.no_loc }}">Cancel</a>
+                                            <!-- </div> -->
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mt-3 p-2"><!-- <div class="card shadow"> -->
+                    <div class="card-header border-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm">
+                                <caption>Last updated {{ data.updated_at|date:"d/m/Y" }} {{ data.updated_at|date:"H:i" }}</caption>
+                                <thead class="table-secondary">
+                                <tr><th>No.</th>
+                                    <th>No. Location</th>
+                                    <th>Assign </th>
+                                    <th>Storage </th>
+                                    <th>Tooling Area Part</th>
+                                    <th>Status </th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr><td class="border-end" >{{ value|default:"--" }}</td>
+                                    <td>{{ data.no_loc }}</td>
+                                    <td>{{ data.assign }}</td>
+                                    <td>{% if data.storage == "CT" %}CABINET{% elif data.storage == "CC" %}CABINET (CHEMICAL){% elif data.storage == "FR" %}FLOOR{% else %}RACK{% endif %}
+                                            </td>
+                                    <td>{% if data.area == "BL" %}BLOW{% elif data.storage == "IN" %}INJECTION{% elif data.storage == "CH" %}CHEMICAL (MAINTENANCE){% elif data.storage == "CE" %}CONSUMABLE ELECTRICAL{% elif data.storage == "CM" %}CONSUMABLE MECHANICAL{% else %}VACUUM{% endif %}
+                                            </td>
+                                    <td>{% if data.status == "UL" %}USED{% elif data.status == "FL" %}FREE{% elif data.status == "HU" %} HELD{% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- <input class="btn btn-primary btn-sm mt-1 col-1"  type="submit" value="Save"> -->
+            </form>
+        </div>
+    </div>
+</body>
+</html>

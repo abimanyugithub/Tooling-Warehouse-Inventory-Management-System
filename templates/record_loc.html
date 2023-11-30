@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'assets/fontawesome/css/all.css' %}">
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+</head>
+<body>
+<div class="container px-4 py-5">
+    <div class="container"><p><h2>{{ header }}</h2><p>
+        <hr class="hr" />
+        <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
+        <hr class="hr" />
+        <!-- alert -->
+        {% if messages %}
+        {% for messages in messages %}
+        {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+        <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewLocationProduct' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+        <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewLocationProduct' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+        <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewLocationProduct' %}"></a></div>
+        {% endif %}
+        {% endfor %}
+        {% else %}<div id="alert"></div>
+        {% endif %}
+        <!-- alert -->
+        <div class="card p-2"><!-- <div class="card shadow"> -->
+            <div class="card-header border-0">
+                <form name="myForm" onsubmit="return validateForm()" action="{% url 'ResultLocationProduct' %}" method="GET" enctype="multipart/form-data">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead>
+                            <tr class="table-primary">
+                                <th>From No. Location</th>
+                                <th>To No. Location</th>
+                                <th>Assign</th>
+                                <th>Status</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>
+                                    <span class="h-formfield-uppercase">
+                                        <input class="form-control form-control-sm shadow-none" type="text" id="no_loc1" name="no_loc1" placeholder="Search No. Location..." />
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="h-formfield-uppercase">
+                                        <input class="form-control form-control-sm shadow-none" type="text" id="no_loc2" name="no_loc2" placeholder="Search No. Location..." />
+                                    </span>
+                                </td>
+                                <td>
+                                    <select class="form-select form-select-sm shadow-none" name="assign">
+                                        <option value="">ALL</option>
+                                        <option disabled>{{ value|default:"---" }}</option>
+                                        <option value="P">PRIMARY</option>
+                                        <option value="R">RESERVE</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select class="form-select form-select-sm shadow-none" name="status">
+                                        <option value="">ALL</option>
+                                        <option disabled>{{ value|default:"---" }}</option>
+                                        <option value="FL">FREE</option>
+                                        <option value="UL">USED</option>
+                                        <option value="HU">HELD</option>
+                                    </select>
+                                </td>
+                                <!-- <td>
+                                    <span class="h-formfield-uppercase">
+                                        <input class="form-control form-control-sm shadow-none" type="text" id="prod_code" name="prod_code" placeholder="Search No. Prod." />
+                                    </span>
+                                </td> -->
+                            </tr>
+                            </tbody>
+                        </table>
+                        <div class="hstack gap-1">
+                            <button class="btn btn-primary btn-sm px-3" type="submit">Search</button>
+                            <a class="btn btn-secondary btn-sm px-3" href="{% url 'ViewLocationProduct' %}">Reset</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card mt-3 p-2"><!-- <div class="card shadow"> -->
+            <div class="card-header border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <caption><!-- pagination before result -->
+                            {% if page_obj.has_other_pages %}
+                            <ul class="pagination justify-content-center pagination-sm">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page=1">First page</a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ page_obj.previous_page_number }}">
+                                    <span aria-hidden="true">&laquo;</span></a></li>
+                                {% endif %} {% for num in page_obj.paginator.page_range %} {% if page_obj.number == num %}
+                                <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span> </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ num }}">{{ num }}</a></li>
+                                {% endif %} {% endfor %} {% if page_obj.has_next %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ page_obj.next_page_number }}"><span aria-hidden="true">&raquo;</span></a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ page_obj.paginator.num_pages }}">Last page</a> </li>
+                                {% endif %}
+                            </ul><!-- end pagination -->
+                            <!-- pagination after result-->
+                            {% elif object_list.has_other_pages %}
+                            <ul class="pagination justify-content-center pagination-sm">
+                                {% if object_list.has_previous %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page=1{% if request.GET.no_loc1 and request.GET.no_loc2 %}&no_loc1={{ request.GET.no_loc1 }}&no_loc2={{ request.GET.no_loc2 }}&assign={{ request.GET.assign }}&status={{ request.GET.status }}{% endif %}">First page</a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.previous_page_number }}{% if request.GET.no_loc1 and request.GET.no_loc2 %}&no_loc1={{ request.GET.no_loc1 }}&no_loc2={{ request.GET.no_loc2 }}&assign={{ request.GET.assign }}&status={{ request.GET.status }}{% endif %}">
+                                    <span aria-hidden="true">&laquo;</span></a></li>
+                                {% endif %} {% for num in object_list.paginator.page_range %} {% if object_list.number == num %}
+                                <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span> </li>
+                                {% elif num > object_list.number|add:'-3' and num < object_list.number|add:'3' %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ num }}{% if request.GET.no_loc1 and request.GET.no_loc2 %}&no_loc1={{ request.GET.no_loc1 }}&no_loc2={{ request.GET.no_loc2 }}&assign={{ request.GET.assign }}&status={{ request.GET.status }}{% endif %}">{{ num }}</a></li>
+                                {% endif %} {% endfor %} {% if object_list.has_next %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.next_page_number }}{% if request.GET.no_loc1 and request.GET.no_loc2 %}&no_loc1={{ request.GET.no_loc1 }}&no_loc2={{ request.GET.no_loc2 }}&assign={{ request.GET.assign }}&status={{ request.GET.status }}{% endif %}">
+                                    <span aria-hidden="true">&raquo;</span></a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.paginator.num_pages }}{% if request.GET.no_loc1 and request.GET.no_loc2 %}&no_loc1={{ request.GET.no_loc1 }}&no_loc2={{ request.GET.no_loc2 }}&assign={{ request.GET.assign }}&status={{ request.GET.status }}{% endif %}">Last page</a> </li>
+                                {% endif %}
+                            </ul>
+                            {% endif %}
+                            <!-- end pagination -->
+                        </caption>
+                        <thead>
+                            <tr class="table-secondary">
+                                <th>No.</th>
+                                <th>No. Location</th>
+                                <th>Assign</th>
+                                <th>Status</th>
+                                <th>No. Product</th>
+                                <th>Product Description</th>
+                                <th>Qty</th>
+                                <th>Updated Date</th>
+                                <!--<th>Created Date</th>-->
+                            </tr>
+                        </thead>{% if object_list %}
+                        <tbody>{% for data in object_list %}
+                            <tr>
+                                <td class="border-end">{% if page_obj %}
+                                {{ page_obj.start_index|add:forloop.counter0 }}
+                                {% else %}
+                                {{ object_list.start_index|add:forloop.counter0 }}
+                                {% endif %}</td>
+                                <td>{{ data.no_loc }}</td>
+                                <td>{{ data.assign }}</td>
+                                <td>{% if data.status == "FL" %}FREE
+                                    {% elif data.status == "UL" %}USED
+                                    {% elif data.status == "HU" %}HELD
+                                    {% endif %}</td>
+
+                                <!-- panggil dari model lain -->
+                                {% if data.status == "UL" or data.status == "HU" %}
+                                {% for product in tb_temp %}
+                                {% if product.no_loc_id == data.no_loc %}
+                                <td>{{ product.prod_code_id }}</td>
+                                <td>{{ product.prod_code.prod_desc }}</td>
+                                <td>{{ product.qty }}</td>
+                                <td>{{ product.modified|date:"d/m/Y" }} {{ product.modified|date:"H:i" }}</td>
+                                {% endif %}{% endfor %}
+                                {% else %}
+                                <td>{{ value|default:"--"}}</td>
+                                <td>{{ value|default:"--"}}</td>
+                                <td>{{ value|default:"--"}}</td>
+                                <td>{{ value|default:"--"}}</td>
+                                {% endif %}
+                                <!-- end tag dari model lain -->
+
+                                <!--<td>{{ data.date_created|date:"d/m/Y" }} {{ data.date_created|date:"H:i" }}</td>-->
+                                <!-- <td>{{ data.modified|date:"d/m/Y" }} {{ data.modified|date:"H:i" }}</td> -->
+                            </tr>{% endfor %}{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+$("form[name=myForm]").submit(function() {
+    if ($("#no_loc1").val() == "" || $("#no_loc2").val() == ""){
+        $("#alert").html("<div class='alert alert-warning border-0' role='alert'>Fill the form to be submitted.</div>");
+        return false;
+    }
+});
+</script>
+</html>

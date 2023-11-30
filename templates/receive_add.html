@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'assets/fontawesome/css/all.css' %}">
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+    <style>
+    table {
+        width: 50%;
+        counter-reset: row-num -1;
+    }
+    table tr {
+        counter-increment: row-num;
+    }
+    table tr td:first-child::before {
+        content: counter(row-num) ". ";
+    }
+    </style>
+<body>
+    <div class="container px-4 py-5">
+        <div class="container"><p><h2>{{ header }}</h2><p>
+            <hr class="hr" />
+            <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
+            &nbsp;<div class="vr"></div>&nbsp;
+            <a class="btn btn-link" href="{% url 'ViewReceiving' %}">List TTB</a>
+            <hr class="hr" />
+            <form name="myForm" onsubmit="return validateForm()" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <!-- alert -->
+                {% if messages %}
+                {% for messages in messages %}
+                {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+                <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'AddReceiving' %}"></a></div>
+                {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'AddReceiving' %}"></a></div>
+                {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+                <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'AddReceiving' %}"></a></div>
+                {% endif %}
+                {% endfor %}
+                {% else %}<div id="alert"></div>
+                {% endif %}
+                <!-- alert -->
+                <div class="card mt-3 p-2">
+                    <div class="card-header border-0">
+                        <div class="table-responsive">
+                            <table id="myTable" class="table table-sm">
+                                <thead>
+                                    <tr class="table-primary">
+                                        <th style="width: 5%;">No.</th>
+                                        <th style="width: 15%;">No. TTB.</th>
+                                        <th>No. Prod.</th>
+                                        <th colspan="2">Qty. TTB</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="h-formfield-uppercase">
+                                        <td class="border-end"></td>
+                                        <td><input class="form-control form-control-sm shadow-none" type="text" id="no_ttb" name="no_ttb" placeholder="Enter No. TTB." /></td>
+                                        <td><input class="form-control form-control-sm shadow-none" type="text" id="prod_code" name="prod_code" placeholder="Enter No. Prod." /></td>
+                                        <td><input class="form-control form-control-sm shadow-none" min=1 type="number" id="qty" name="qty" placeholder=0 onkeypress="return isNumberKey(event)"/></td>
+                                        <td><button class='btn btn-sm text-danger' type='button'>&#9421;</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="hstack gap-1">
+                                <input class="btn btn-primary btn-sm" type="submit" value="Submit">
+                                <a class="btn btn-secondary btn-sm" href="{% url 'ViewReceiving' %}">Cancel</a>
+                                <button class="btn btn-primary btn-sm ms-auto" type="button" onclick="addRowFunction();"><i class='fa fa-plus'></i> Add new row</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+<script>
+$("form[name=myForm]").submit(function() {
+    if ($("#no_ttb").val() == "" || $("#prod_code").val() == "" || $("#qty").val() == ""){
+        $("#alert").html("<div class='alert alert-warning border-0' role='alert'>Fill the form to be submitted.</div>");
+        return false;
+    }
+});
+</script>
+<script>
+$('input').bind('paste', function (e) {
+    var $start = $(this);
+    var source
+
+    //check for access to clipboard from window or event
+    if (window.clipboardData !== undefined) {
+        source = window.clipboardData
+    } else {
+        source = e.originalEvent.clipboardData;
+    }
+    var data = source.getData("Text");
+    if (data.length > 0) {
+        if (data.indexOf("\t") > -1) {
+            var columns = data.split("\n");
+            $.each(columns, function () {
+                var values = this.split("\t");
+                $.each(values, function () {
+                    $start.val(this);
+                    if ($start.closest('td').next('td').find('input')[0] != undefined || $start.closest('td').next('td').find('textarea')[0] != undefined) {
+                    $start = $start.closest('td').next('td').find('input');
+                    }
+                    else
+                    {
+                     return false;
+                    }
+                });
+                $start = $start.closest('td').parent().next('tr').children('td:first').find('input');
+            });
+            e.preventDefault();
+        }
+    }
+});
+</script>
+<script>
+function addRowFunction() {
+  var table = document.getElementById("myTable");
+  var row = table.insertRow(-1); // tambah row setelah row dibuat
+  // var cell = row.insertCell(-1);
+  var cell1 = row.insertCell(0);
+  var cell2 = row.insertCell(1);
+  var cell3 = row.insertCell(2);
+  var cell4 = row.insertCell(3);
+  var cell5 = row.insertCell(4);
+  cell1.innerHTML = "<td>";
+  cell2.innerHTML = "<input class='form-control form-control-sm shadow-none' id='no_ttb' type='text' name='no_ttb' placeholder='Enter No. TTB.' />";
+  cell3.innerHTML = "<input class='form-control form-control-sm shadow-none' id='prod_code' type='text' name='prod_code' placeholder='Enter No. Prod.' />";
+  cell4.innerHTML = "<input class='form-control form-control-sm shadow-none' id='qty' min=1 type='number' name='qty' placeholder=0 onkeypress='return isNumberKey(event)'/>";
+  cell5.innerHTML = "<button class='btn btn-sm text-danger' type='button'>&#9421;</button>";
+}
+document.querySelector('table').addEventListener('click', function(e) {
+  if (e.target.tagName == "BUTTON") {
+    const tr = e.target.closest('tr');
+    tr.remove();
+  }
+});
+</script>
+<script>
+function isNumberKey(evt) {
+    var charCode = (evt.which) ? evt.which : evt.keyCode
+    if (charCode > 31 && (charCode < 48 || charCode > 57))
+    return false;
+    return true;
+}
+</script>
+</html>

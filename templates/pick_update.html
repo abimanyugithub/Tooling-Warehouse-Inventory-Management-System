@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'assets/fontawesome/css/all.css' %}">
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+    <style>
+        textarea {
+            resize:none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container px-4 py-5">
+        <div class="container"><p><h2>{{ header }}</h2><p>
+            <hr class="hr" />
+            <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
+            <hr class="hr" />
+            <form name="myForm" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <!-- alert -->
+                {% if messages %}
+                {% for messages in messages %}
+                {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+                <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'UpdatePicking' data.id %}"></a></div>
+                {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'UpdatePicking' data.id %}"></a></div>
+                {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+                <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'UpdatePicking' data.id %}"></a></div>
+                {% endif %}
+                {% endfor %}
+                {% else %}<div id="alert"></div>
+                {% endif %}
+                <!-- alert -->
+                <div class="card p-2"><!-- <div class="card shadow"> -->
+                    <div class="card-header border-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead class="table-secondary">
+                                    <tr>
+                                      <th>No. Product</th>
+                                      <th>Product Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>{{ data.prod_code_id }}</td>
+                                        <td>{{ data.prod_code.prod_desc }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <table class="table table-bordered table-sm">
+                                <thead>
+                                    <tr class="table-primary">
+                                        <th>No. Location</th>
+                                        <th style="width: 15%;">Avail. Qty.</th>
+                                        <th style="width: 15%;">Issue Qty.</th>
+                                        <th>Adjust. Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><th>{{ data.no_loc_id }}</th>
+                                        <td><input type="hidden" name="id" value="{{ data.id }}"/>
+                                            <input class="form-control form-control-sm shadow-none" type="text" value="{{ data.qty }}" readonly /></td>
+                                        <td><input class="form-control form-control-sm shadow-none" min="1" type="number" id="qty" name="qty" placeholder=0 onkeypress="return isNumberKey(event)"/></td>
+                                        <td>
+                                            <select class="form-select form-select-sm shadow-none" name="adjust">
+                                              <option value="AO">AO - ADJUST. OUT</option>
+                                              <!-- <option value="AI">AI - ADJUST. IN</option> -->
+                                            </select>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="form-group mb-3 mt-3">
+                                <textarea class="form-control shadow-none textarea_text" maxlength="160" id="comment" name="comment" rows="2" placeholder="Type a new comment here"></textarea>
+                                <small class="text-primary" id="remainingC"></small>
+                            </div>
+                            <div class="hstack gap-1">
+                                <!-- <button class="btn btn-primary btn-sm px-2" type="submit">Submit</button> -->
+                                <a class="btn btn-primary btn-sm px-2" onclick="return validateForm()">Submit</a>
+
+                                        <!-- Modal -->
+                                        <div class="modal fade" id="id" tabindex="-1" aria-labelledby="exampleModalLabel2" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h1 class="modal-title fs-5" id="exampleModalLabel2"><i class="fa fa-info-circle" style="color:#243c64;"></i>
+                                                                    &nbsp;Authorization</h1>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        Please tap card
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <input class="form-control form-control-sm shadow-none" id="auth" name="auth" type="text" autofocus/>
+                                                        <button class="btn btn-primary btn-sm px-2" type="submit">Submit</button>
+                                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- End Modal -->
+
+                                <a class="btn btn-secondary btn-sm px-2" href="{% url 'ResultPicking' %}?prod_code={{ data.prod_code_id }}">Cancel</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="card mt-3 p-2">
+                <div class="card-header border-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <caption>Latest picked records</caption>
+                            <thead class="table-secondary">
+                            <tr><th>No.</th>
+                                <th>No. Location</th>
+                                <th>No. Product</th>
+                                <th>Trans. Type</th>
+                                <th>Adj. Type</th>
+                                <th>Qty. Before</th>
+                                <th>Qty. Adj.</th>
+                                <th>Qty. After</th>
+                                <th>Create Date</th>
+                                <th>User</th>
+                            </tr>
+                            </thead>
+                            <tbody>{% for data in object_list %}
+                                <tr><td class="border-end">{{ object_list.start_index|add:forloop.counter0 }}</td>
+                                    <td>{{ data.no_loc }}</td>
+                                    <td>
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#id-{{ data.id }}">{{ data.prod_code_id }}</a>
+
+                                        <!-- Modal -->
+                                        <div class="modal fade" id="id-{{ data.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h1 class="modal-title fs-5" id="exampleModalLabel"><i class="fa fa-info-circle" style="color:#243c64;"></i>
+                                                                    &nbsp;Information</h1>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        {{ data.comment }}
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ data.trans_type }}</td>
+                                    <td>{{ data.adj_type }}</td>
+                                    <td>{{ data.qty_bfr }}</td>
+                                    <td>{{ data.qty_adj }}</td>
+                                    <td>{{ data.qty_afr }}</td>
+                                    <td>{{ data.date_created|date:"d/m/Y" }} {{ data.date_created|date:"H:i" }}</td>
+                                    <td>{{ data.usernm.usernm }}</td>
+                                </tr>{% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+function validateForm() {
+    var a = document.forms["myForm"]["qty"].value;
+    var b = document.forms["myForm"]["comment"].value;
+    if (a == "" || b == ""){
+        document.getElementById("alert").innerHTML = "<div class='alert alert-warning border-0' role='alert'>Fill the form to be submitted.</div>";
+        return false;
+    } else {
+        $("#id").modal('show'); // tampilkan modal jika form valid
+    }
+}
+</script>
+<script>
+document.querySelector('.textarea_text').addEventListener('input', () => {
+    text = document.querySelector('.textarea_text').value;
+    document.querySelector('.textarea_text').value = text.charAt(0).toUpperCase() + text.slice(1);
+}
+)
+</script>
+<script>
+$(document).ready(function() {
+  var len = 0;
+  var maxchar = 160;
+
+  $( '#comment' ).keyup(function(){
+    len = this.value.length
+    if(len > maxchar){
+        return false;
+    }
+    else if (len > 0) {
+        $( "#remainingC" ).html( "Remaining characters: " +( maxchar - len ) );
+    }
+    else {
+        $( "#remainingC" ).html( "Remaining characters: " +( maxchar ) );
+    }
+  })
+});
+</script>
+<script>
+function isNumberKey(evt) {
+    var charCode = (evt.which) ? evt.which : evt.keyCode
+    if (charCode > 31 && (charCode < 48 || charCode > 57))
+    return false;
+    return true;
+}
+</script>
+<script>
+$('#id').on('shown.bs.modal', function() {
+    $('#auth').focus().val('').end();
+})
+</script>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'assets/fontawesome/css/all.css' %}">
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+</head>
+<body>
+<div class="container px-4 py-5">
+    <div class="container"><p><h2>{{ header }}</h2><p>
+        <hr class="hr" />
+        <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
+        <hr class="hr" />
+        <!-- alert -->
+        {% if messages %}
+        {% for messages in messages %}
+        {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+        <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewStockOpname' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+        <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewStockOpname' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+        <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewStockOpname' %}"></a></div>
+        {% endif %}
+        {% endfor %}
+        {% else %}<div id="alert"></div>
+        {% endif %}
+        <!-- alert -->
+        <div class="card p-2"><!-- <div class="card shadow"> -->
+            <div class="card-header border-0">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <caption>Summary</caption>
+                        <tbody class="table-light">
+                        <tr>
+                            <td>
+                                <div class="hstack gap-1">Total: {{ total }}
+                                    <div class="ms-auto"><span class='text-primary'>
+                                       <i class="fa fa-square"></i></span> Checked: {{ ch }} ({{ ch_cent|floatformat:0 }}%)</div>
+                                    &nbsp;<div class="vr"></div>&nbsp;<span class='text-warning'><i class="fa fa-square"></i></span> Pending: {{ pe }} ({{ pe_cent|floatformat:0 }}%)
+                                    &nbsp;<div class="vr"></div>&nbsp;<span class='text-secondary'><i class="fa fa-square"></i></span> Uncheck: {{ uc }} ({{ uc_cent|floatformat:0 }}%)
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="card mt-3 p-2">
+            <div class="card-header border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                         <caption>
+                             <!-- pagination after result-->
+                            {% if object_list.has_other_pages %}
+                            <ul class="pagination justify-content-center pagination-sm">
+                                {% if object_list.has_previous %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">First page</a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                                    <span aria-hidden="true">&laquo;</span></a></li>
+                                {% endif %} {% for num in object_list.paginator.page_range %} {% if object_list.number == num %}
+                                <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span> </li>
+                                {% elif num > object_list.number|add:'-3' and num < object_list.number|add:'3' %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a></li>
+                                {% endif %} {% endfor %} {% if object_list.has_next %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                                    <span aria-hidden="true">&raquo;</span></a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Last page</a> </li>
+                                {% endif %}
+                            </ul>
+                            {% endif %}
+                         </caption>
+                        <thead>
+                            <tr>
+                                <th colspan="8">
+                                    <form name="myForm" action="{% url 'ResultStockOpname' %}" method="GET" enctype="multipart/form-data">
+                                        <div class="hstack gap-2 mb-2">
+                                        <!-- <div class="bg-light border ms-auto"> -->
+                                        <span class="h-formfield-uppercase">
+                                            <input onchange="this.form.submit()" class="form-control form-control-sm shadow-none" type="text" id="name" name="q" placeholder="No. Location" />
+                                        </span>
+                                        <!-- </div> -->
+                                        <div class="vr"></div>
+                                        <!-- <div class="ms-auto"> -->
+                                        <button class="btn btn-primary btn-sm px-3" type="submit">Search</button>
+                                        <a class="btn btn-secondary btn-sm px-3" href="{% url 'ViewStockOpname' %}">Reset</a>
+                                        <!-- </div> -->
+                                    </div>
+                                    </form>
+                                </th>
+                            </tr>
+                            <tr class="table-secondary">
+                                <th>No.</th>
+                                <th style="width: 15%;">No. Location</th>
+                                <th style="width: 5%;">Assign</th>
+                                <th>Storage</th>
+                                <th>Tooling Area Part</th>
+                                <th>Check Status</th>
+                                <th>Loc. Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>{% for data in object_list %}
+                        {% if data.sto_check == 'CHK' %}
+                        <tr class="table-primary">{% elif data.sto_check == 'PND' %}
+                        <tr class="table-warning">{% else %}
+                        <tr>{% endif %}
+                            <td class="border-end">
+                                {% if page_obj %}
+                                {{ page_obj.start_index|add:forloop.counter0 }}
+                                {% else %}
+                                {{ object_list.start_index|add:forloop.counter0 }}
+                                {% endif %}
+                            </td>
+                            <td>{{ data.no_loc }}</td>
+                            <td>{{ data.assign }}</td>
+                            <td>{% if data.storage == 'CT' %}
+                                CABINET
+                                {% elif data.storage == 'CC' %}
+                                CABINET CHEMICAL
+                                {% elif data.storage == 'FR' %}
+                                FLOOR
+                                {% else %}
+                                RACK
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if data.area == 'BL' %}
+                                BLOW
+                                {% elif data.area == 'IN' %}
+                                INJECTION
+                                {% elif data.area == 'CH' %}
+                                CHEMICAL (MAINTENANCE)
+                                {% elif data.area == 'CE' %}
+                                CONSUMABLE ELECTRICAL
+                                {% elif data.area == 'CM' %}
+                                CONSUMABLE MECHANICAL
+                                {% else %}
+                                VACUUM
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if data.sto_check == "CHK" %}
+                                CHECKED
+                                {% elif data.sto_check == "PND" %}
+                                PENDING
+                                {% else %}
+                                UNCHECKED
+                                {% endif %}
+                            </td>
+                            {% if data.status == 'FL' %}
+                            <td>FREE</td>
+                            <td>
+                                <a class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#id-{{ data.no_loc|cut:'.' }}">Take</a>
+
+                                <!-- Modal -->
+                                <div class="modal fade" id="id-{{ data.no_loc|cut:'.' }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h1 class="modal-title fs-5" id="exampleModalLabel"><i class="fa fa-question-circle" style="color:#243c64;"></i>&nbsp;Lokasi kosong?</h1>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Apakah lokasi {{ data.no_loc }} kosong?
+                                            </div>
+                                            <div class="modal-footer">
+                                                <form method="POST" action="{% url 'ConfirmStockOpname' data.no_loc %}" enctype="multipart/form-data">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" value="CHK" name="sto_check" />
+                                                    <input class="btn btn-sm btn-primary px-3" type="submit" value="Yes">
+                                                </form>
+                                                {% if data.assign == 'P' %}
+                                                <form method="POST" action="{% url 'ConfirmStockOpname' data.no_loc %}" enctype="multipart/form-data">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" value="PND" name="sto_check" />
+                                                    <input class="btn btn-sm btn-secondary px-3" type="submit" value="No">
+                                                </form>
+                                                {% elif data.assign == 'R' %}
+                                                <a class="btn btn-warning btn-sm px-3" href="{% url 'AddRsvStockOpname' data.no_loc %}">Edit</a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            {% else %}
+                            <td>{% if data.status == 'UL' %}USED{% else %}HELD{% endif %}</td>
+                            <td><form action="{% url 'ResultStockOpname' %}" method="GET" enctype="multipart/form-data">
+                                <input type="hidden" value="{{ data.no_loc }}" name="q" />
+                                <input class="btn btn-primary btn-sm px-3" type="submit" value="Take" /></form>
+                            </td>
+                            {% endif %}
+                            </tr>{% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <a class="btn btn-link" data-bs-toggle="modal" data-bs-target="#id">Clear checked?</a>
+        <!-- Modal -->
+        <div class="modal fade" id="id" tabindex="-1" aria-labelledby="exampleModalLabel1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel1"><i class="fa fa-exclamation-circle" style="color:#243c64;"></i>&nbsp;Clear checked?</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Unmark the check results
+                    </div>
+                    <div class="modal-footer">
+                        <form method="POST" action="{% url 'RemoveCheckStockOpname' %}">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-danger" name="clear">Clear</button>
+                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+$("form[name=myForm]").submit(function() {
+    if ($("input").val() == ""){
+        $("#alert").html("<div class='alert alert-warning border-0' role='alert'>Fill the form to be submitted.</div>");
+        return false;
+    }
+});
+</script>
+</html>

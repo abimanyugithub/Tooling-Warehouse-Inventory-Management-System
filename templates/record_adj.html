@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'assets/fontawesome/css/all.css' %}">
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+</head>
+<body>
+<div class="container px-4 py-5">
+    <div class="container"><p><h2>{{ header }}</h2><p>
+        <hr class="hr" />
+        <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
+        <hr class="hr" />
+        <!-- alert -->
+        {% if messages %}
+        {% for messages in messages %}
+        {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+        <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewAdjustmentRecord' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+        <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewAdjustmentRecord' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+        <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewAdjustmentRecord' %}"></a></div>
+        {% endif %}
+        {% endfor %}
+        {% else %}<div id="alert"></div>
+        {% endif %}
+        <!-- alert -->
+        <div class="card p-2"><!-- <div class="card shadow"> -->
+            <div class="card-header border-0">
+                <form name="myForm" action="{% url 'ResultAdjustmentRecord' %}" method="GET" enctype="multipart/form-data">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead>
+                            <tr class="table-primary">
+                                <th>No. (Prod / Loc / TTB)</th>
+                                <th>Transaction Type</th>
+                                <th>Before Date </th>
+                                <th>After Date </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <th>
+                                    <span class="h-formfield-uppercase">
+                                        <input class="form-control form-control-sm shadow-none" type="text" id="name" name="q" placeholder="Search No..." />
+                                    </span>
+                                </th>
+                                <td>
+                                    <select class="form-select form-select-sm shadow-none" name="trans_type">
+                                        <option value="">ALL</option>
+                                        <option disabled>{{ value|default:"---" }}</option>
+                                        <option value="PCK">PCK - PICKING</option>
+                                        <option value="STO">STO - STOCK OPNAME</option>
+                                        <option value="TTB">TTB - RECEIVING</option>
+                                    </select>
+                                </td>
+                                <td><input class="form-control form-control-sm shadow-none" type="datetime-local"  id="date_bfr" name="date_bfr"  /></td>
+                                <td><input class="form-control form-control-sm shadow-none" type="datetime-local"  id="date_afr" name="date_afr"  /></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <div class="hstack gap-1">
+                            <button class="btn btn-primary btn-sm px-3" type="submit">Search</button>
+                            <a class="btn btn-secondary btn-sm px-3" href="{% url 'ViewAdjustmentRecord' %}">Reset</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card mt-3 p-2"><!-- <div class="card shadow"> -->
+            <div class="card-header border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <caption>
+                            <!-- pagination after result-->
+                            {% if object_list.has_other_pages %}
+                            <ul class="pagination justify-content-center pagination-sm">
+                                {% if object_list.has_previous %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page=1{% if request.GET.date_bfr and request.GET.date_afr %}&q={{ request.GET.q }}&trans_type={{ request.GET.trans_type }}&date_bfr={{ request.GET.date_bfr }}&date_afr={{ request.GET.date_afr }}{% endif %}">First page</a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.previous_page_number }}{% if request.GET.date_bfr and request.GET.date_afr %}&q={{ request.GET.q }}&trans_type={{ request.GET.trans_type }}&date_bfr={{ request.GET.date_bfr }}&date_afr={{ request.GET.date_afr }}{% endif %}">
+                                    <span aria-hidden="true">&laquo;</span></a></li>
+                                {% endif %} {% for num in object_list.paginator.page_range %} {% if object_list.number == num %}
+                                <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span> </li>
+                                {% elif num > object_list.number|add:'-3' and num < object_list.number|add:'3' %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ num }}{% if request.GET.date_bfr and request.GET.date_afr %}&q={{ request.GET.q }}&trans_type={{ request.GET.trans_type }}&date_bfr={{ request.GET.date_bfr }}&date_afr={{ request.GET.date_afr }}{% endif %}">{{ num }}</a></li>
+                                {% endif %} {% endfor %} {% if object_list.has_next %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.next_page_number }}{% if request.GET.date_bfr and request.GET.date_afr %}&q={{ request.GET.q }}&trans_type={{ request.GET.trans_type }}&date_bfr={{ request.GET.date_bfr }}&date_afr={{ request.GET.date_afr }}{% endif %}">
+                                    <span aria-hidden="true">&raquo;</span></a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.paginator.num_pages }}{% if request.GET.date_bfr and request.GET.date_afr %}&q={{ request.GET.q }}&trans_type={{ request.GET.trans_type }}&date_bfr={{ request.GET.date_bfr }}&date_afr={{ request.GET.date_afr }}{% endif %}">Last page</a> </li>
+                                {% endif %}
+                            </ul>
+                            {% endif %}
+                            <!-- end pagination -->
+                        </caption>
+                        <thead>
+                            <tr class="table-secondary">
+                                <th>No.</th>
+                                <th>No. Location</th>
+                                <th>No. Product</th>
+                                <!-- <th>Product Description</th> -->
+                                <th>Trans. Type</th>
+                                <th>No. TTB</th>
+                                <th>Qty. TTB</th>
+                                <th>Adj. Type</th>
+                                <th>Qty. Before</th>
+                                <th>Qty. Adj.</th>
+                                <th>Qty. After</th>
+                                <th>Created Date</th>
+                                <th>User</th>
+                            </tr>
+                        </thead>{% if object_list %}
+                        <tbody>{% for data in object_list %}
+                            <tr>
+                                <td class="border-end">{% if page_obj %}
+                                {{ page_obj.start_index|add:forloop.counter0 }}
+                                {% else %}
+                                {{ object_list.start_index|add:forloop.counter0 }}
+                                {% endif %}</td>
+                                <td>{{ data.no_loc }}</td>
+                                <td>
+                                    {% if data.trans_type == "PCK" %}
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#id-{{ data.id }}">{{ data.prod_code_id }}</a>
+
+                                    <!-- Modal -->
+                                    <div class="modal fade" id="id-{{ data.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h1 class="modal-title fs-5" id="exampleModalLabel"><i class="fa fa-info-circle" style="color:#243c64;"></i>&nbsp;Information</h1>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    {{ data.comment }}
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {% else %}
+                                    {{ data.prod_code_id }}
+                                    {% endif %}
+                                </td>
+                                <!-- <td>{{ data.prod_code.prod_desc }}</td> -->
+                                <td>{{ data.trans_type }}</td>
+                                <td>{% if data.no_ttb == None %}
+                                    {{ value|default:"--" }}
+                                    {% else %}
+                                    {{ data.no_ttb }}
+                                    {% endif %}</td>
+                                <td>{% if data.ttb_qty == None %}
+                                    {{ value|default:"--" }}
+                                    {% else %}
+                                    {{ data.ttb_qty }}
+                                    {% endif %}</td>
+                                <td>{{ data.adj_type }}</td>
+                                <td>{{ data.qty_bfr }}</td>
+                                <td>{{ data.qty_adj }}</td>
+                                <td>{{ data.qty_afr }}</td>
+                                <td>{{ data.date_created|date:"d/m/Y" }} {{ data.date_created|date:"H:i" }}</td>
+                                <td>{{ data.usernm.usernm }}</td>
+                            </tr>{% endfor %}{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+$("form[name=myForm]").submit(function() {
+    if ($("#date_bfr").val() == "" || $("#date_afr").val() == ""){
+        $("#alert").html("<div class='alert alert-warning border-0' role='alert'>Fill the form to be submitted.</div>");
+        return false;
+    }
+});
+</script>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+<body>
+    <div class="container px-4 py-5">
+        <div class="container"><p><h2>{{ header }}</h2><p>
+            <hr class="hr" />
+            <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
+            &nbsp;<div class="vr"></div>&nbsp;
+            <a class="btn btn-link" href="{% url 'ViewProduct' %}">List Product</a>
+            <hr class="hr" />
+            <form name="myForm" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <!-- alert -->
+                {% if messages %}
+                {% for messages in messages %}
+                {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+                <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'AddProduct' %}"></a></div>
+                {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'AddProduct' %}"></a></div>
+                {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+                <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'AddProduct' %}"></a></div>
+                {% endif %}
+                {% endfor %}
+                {% else %}<div id="alert"></div>
+                {% endif %}
+                <!-- alert -->
+                <div class="card p-2"><!-- <div class="card shadow"> -->
+                    <div class="card-header border-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-primary">
+                                    <tr><th>No.</th>
+                                        <th style="width: 15%;">No. Prod.</th>
+                                        <th>Prod. Desc.</th>
+                                        <th>Supplier</th>
+                                        <th style="width: 10%;">Pack</th>
+                                        <th style="width: 10%;">Min. Stock</th>
+                                        <th style="width: 10%;">Max. Stock</th>
+                                        <th style="width: 10%;">L/Time (Days)</th>
+                                        <th style="width: 15%;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="h-formfield-uppercase">
+                                        <td>{{ value|default:"--" }}</td>
+                                        <td><input class="form-control form-control-sm shadow-none" type="text" id="prod_code" name="prod_code" placeholder="Enter No. Prod." /></td>
+                                        <td><input class="form-control form-control-sm shadow-none" type="text" id="prod_desc" name="prod_desc" placeholder="Enter Prod. Desc." /></td>
+                                        <td><input class="form-control form-control-sm shadow-none" type="text" id="supplier" name="supplier" placeholder="Enter Supplier" /></td>
+                                        <td><input class="form-control form-control-sm shadow-none" type="number" min="1" id="pack_size" name="pack_size" placeholder=0 onkeypress="return isNumberKey(event)" /></td>
+                                        <td><input class="form-control form-control-sm shadow-none" type="number" min="1" id="stock_min" name="stock_min" placeholder=0 onkeypress="return isNumberKey(event)"/></td>
+                                        <td><input class="form-control form-control-sm shadow-none" type="number" min="1" id="stock_max" name="stock_max" placeholder=0 onkeypress="return isNumberKey(event)"/></td>
+                                        <td><input class="form-control form-control-sm shadow-none" type="number" min="1" id="l_time_days" name="l_time_days" placeholder="0" onkeypress="return isNumberKey(event)"/></td>
+                                        <td><!-- <div class="hstack gap-1"> -->
+                                                <button class="btn btn-primary btn-sm px-3" type="submit">Save</button>
+                                            <!-- &nbsp;<div class="vr"></div>&nbsp; -->
+                                                <a class="btn btn-secondary btn-sm px-2" href="{% url 'ViewProduct' %}">Cancel</a>
+                                            <!-- </div> -->
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mt-3 p-2"><!-- <div class="card shadow"> -->
+                    <div class="card-header border-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm">
+                                <caption>Last created product</caption>
+                                <thead class="table-secondary">
+                                <tr><th>No.</th>
+                                    <th>No. Prod.</th>
+                                    <th>Prod. Desc. </th>
+                                    <th>Supplier </th>
+                                    <th>Pack</th>
+                                    <th>Min. Stock</th>
+                                    <th>Max. Stock</th>
+                                    <th>L/Time (Days)</th>
+                                    <th>Created Date</th>
+                                </tr>
+                                </thead>
+                                <tbody>{% for data in object_list %}
+                                <tr><td class="border-end" >{{ object_list.start_index|add:forloop.counter0 }}</td>
+                                    <td>{{ data.prod_code }}</td>
+                                    <td>{{ data.prod_desc }}</td>
+                                    <td>{{ data.supplier }}</td>
+                                    <td>{{ data.pack_size }}</td>
+                                    <td>{{ data.stock_min }}</td>
+                                    <td>{{ data.stock_max }}</td>
+                                    <td>{{ data.l_time_days }}</td>
+                                    <td>{{ data.date_created|date:"d/m/Y" }} {{ data.date_created|date:"H:i" }}</td>
+                                </tr> {% endfor %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+<script>
+$("form[name=myForm]").submit(function() {
+    if ($('#prod_code').val() == "" || $('#prod_desc').val() == "" || $('#supplier').val() == "" || $('#pack_size').val() == "" || $('#stock_min').val() == "" || $('#stock_max').val() == "" || $('#l_time_days').val() == ""  ){
+        $("#alert").html("<div class='alert alert-warning border-0' role='alert'>Fill the form to be submitted.</div>");
+        return false;
+    } else if (parseInt($('#stock_min').val()) > parseInt($('#stock_max').val())){
+        $("#alert").html("<div class='alert alert-danger border-0' role='alert'>Min value cannot be more than Max value.</div>");
+        return false;
+    }
+});
+</script>
+<script>
+$('input').bind('paste', function (e) {
+    var $start = $(this);
+    var source
+
+    //check for access to clipboard from window or event
+    if (window.clipboardData !== undefined) {
+        source = window.clipboardData
+    } else {
+        source = e.originalEvent.clipboardData;
+    }
+    var data = source.getData("Text");
+    if (data.length > 0) {
+        if (data.indexOf("\t") > -1) {
+            var columns = data.split("\n");
+            $.each(columns, function () {
+                var values = this.split("\t");
+                $.each(values, function () {
+                    $start.val(this);
+                    if ($start.closest('td').next('td').find('input')[0] != undefined || $start.closest('td').next('td').find('textarea')[0] != undefined) {
+                    $start = $start.closest('td').next('td').find('input');
+                    }
+                    else
+                    {
+                     return false;
+                    }
+                });
+                $start = $start.closest('td').parent().next('tr').children('td:first').find('input');
+            });
+            e.preventDefault();
+        }
+    }
+});
+</script>
+<script>
+function isNumberKey(evt) {
+    var charCode = (evt.which) ? evt.which : evt.keyCode
+    if (charCode > 31 && (charCode < 48 || charCode > 57))
+    return false;
+    return true;
+}
+</script>
+</html>

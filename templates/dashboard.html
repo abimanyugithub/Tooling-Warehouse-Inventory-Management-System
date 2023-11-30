@@ -1,0 +1,283 @@
+
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'assets/fontawesome/css/all.css' %}">
+    <script src="{% static 'assets/js/rpie.js' %}"></script>
+    <title>{{ title }}</title>
+    <style>
+    .inlineTable {
+    float:left;
+    }
+    </style>
+</head>
+<body>
+<div class="container px-4 py-5">
+    <div class="container"><p><h2>{{ header }}</h2><p><hr class="hr" />
+                <div class="card-group">
+            <div class="card p-2">
+                <div class="card-header border-0">
+                    <div class="table-responsive"><h5 class="sub-header">Location</h5><hr class="hr" />
+                        <table class="table table-sm">
+                            <thead>
+                            <tr>
+                                <td colspan="3">Primary</td>
+                                <td colspan="3">Reserve</td>
+                                <td colspan="2">STO Check</td>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td><span style='color:#33b5e5'>
+                                    <i class="fa fa-circle"></i></span>&nbsp;Used</td>
+                                <td>{{ chart_pri_ul }}</td>
+                                <td class="border-end">{{ pri_ul_cent|floatformat:0 }}%</td>
+                                <td><span style='color:#33b5e5'>
+                                    <i class="fa fa-circle"></i></span>&nbsp;Used</td>
+                                <td>{{ chart_rsv_ul }}</td>
+                                <td class="border-end">{{ rsv_ul_cent|floatformat:0 }}%</td>
+                                <td><span style='color:#33b5e5'>
+                                    <i class="fa fa-circle"></i></span>&nbsp;Checked</td>
+                                <td>{{ chart_chk }}</td>
+                            </tr>
+                            <tr>
+                                <td><span style='color:#ffbb33'>
+                                    <i class="fa fa-circle"></i></span>&nbsp;Free</td>
+                                <td>{{ chart_pri_fl }}</td>
+                                <td class="border-end">{{ pri_fl_cent|floatformat:0 }}%</td>
+                                <td><span style='color:#ffbb33'>
+                                    <i class="fa fa-circle"></i></span>&nbsp;Free</td>
+                                <td>{{ chart_rsv_fl }}</td>
+                                <td class="border-end">{{ rsv_fl_cent|floatformat:0 }}%</td>
+                                <td><span style='color:#ffbb33'>
+                                    <i class="fa fa-circle"></i></span>&nbsp;Pending</td>
+                                <td>{{ chart_pnd }}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card p-2">
+                <div class="card-header border-0">
+                    <div class="table-responsive"><h5 class="sub-header">Product</h5><hr class="hr" />
+                        <table class="table table-sm">
+                            <thead>
+                            <tr>
+                                <td colspan="3">Status</td>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td><span style='color:#33b5e5'>
+                                    <i class="fa fa-circle"></i></span>&nbsp;Active</td>
+                                <td>{{ chart_actv }}</td>
+                                <td class="border-end">{{ actv_cent|floatformat:0 }}%</td>
+                            </tr>
+                            <tr>
+                                <td><span style='color:#7283a7'>
+                                    <i class="fa fa-circle"></i></span>&nbsp;Blocked</td>
+                                <td>{{ chart_blok }}</td>
+                                <td class="border-end">{{ blok_cent|floatformat:0 }}%</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="card mt-1 p-2">
+            <div class="card-header border-0">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th width="3%">Location Usage</th>
+                            <th width="3%">Product Stock</th>
+                            <th colspan="2" width="3%">STO Progress</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td><canvas id="canvas1" width="300" height="300"></canvas></td>
+                            <td><canvas id="canvas2" width="300" height="300"></canvas></td>
+                            <td colspan="2"><canvas id="canvas3" width="300" height="300"></canvas></td>
+                            <!-- <td><canvas id="myCanvas" width="300" height="300"></canvas></td> -->
+                        </tr>
+                        <tr>
+                            <th><span style='color:#0d6efd'>
+                                <i class="fa fa-square"></i></span>&nbsp;Used: {{ chart_used }}
+                                &nbsp;<div class="vr"></div>&nbsp;
+                                <span style='color:#fd7e14'>
+                                <i class="fa fa-square"></i></span>&nbsp;Free: {{ chart_free }}
+                                <!-- &nbsp;<div class="vr"></div>&nbsp;
+                                <span style='color:#6C757D'>
+                                <i class="fa fa-square"></i></span>&nbsp;Held: {{ chart_held }} -->
+                            </th>
+                            <th><span style='color:#0d6efd'>
+                                <i class="fa fa-square"></i></span>&nbsp;Surplus: {{ chart_surp }}
+                                &nbsp;<div class="vr"></div>&nbsp;
+                                <span style='color:#17a2b8'>
+                                <i class="fa fa-square"></i></span>&nbsp;Safety: {{ chart_safe }}
+                                &nbsp;<div class="vr"></div>&nbsp;
+                                <span style='color:#dc3545'>
+                                <i class="fa fa-square"></i></span>&nbsp;Critical: {{ chart_crit }}
+                            </th>
+                            <th>
+                                <span style='color:#2BBBAD'>
+                                <i class="fa fa-square"></i></span>&nbsp;Progress: {{ sdh_cek }} of {{ of_loc }}
+                            </th>
+                            <td>Last STO {{ last_sto.date_created|date:"d/m/Y" }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-group">
+            <div class="card mt-1 p-2">
+                <div class="card-header border-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead class="table-info">
+                            <tr>
+                                <th width="2%" colspan="2">Top 5: Most In-Demand Parts</th>
+                            </tr>
+                            </thead>
+                            <tbody>{% for data in chart_dem %}
+                            <tr>
+                                <td>{{ data.prod_code }}</td>
+                                <td>{{ data.total }}</td>
+                            </tr>{% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card mt-1 p-2">
+                <div class="card-header border-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead class="table-info">
+                            <tr>
+                                <th width="2%" colspan="3">Top 5: Last Products Picked</th>
+                            </tr>
+                            </thead>
+                            <tbody>{% for data in chart_pic %}
+                            <tr>
+                                <td>{{ data.prod_code_id }}</td>
+                                <td>{{ data.date_created|date:"d/m/Y" }} {{ data.date_created|date:"H:i" }}</td>
+                                <td>{{ data.qty_adj }}</td>
+                            </tr>{% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card mt-1 p-2">
+                <div class="card-header border-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead class="table-info">
+                            <tr>
+                                <th width="2%" colspan="2">Top 5: Last Products Received</th>
+                            </tr>
+                            </thead>
+                            <tbody>{% for data in chart_rcvd %}
+                            <tr>
+                                <td>{{ data.no_ttb }}</td>
+                            </tr>{% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+
+
+var obj1 = {
+	values: [{{ chart_free }}, {{ chart_used }}],
+	colors: ['#fd7e14', '#0d6efd'],
+	animation: true, // Takes boolean value & default behavious is false
+	animationSpeed: 30, // Time in miliisecond & default animation speed is 20ms
+	fillTextData: true, // Takes boolean value & text is not generate by default
+	fillTextColor: '#fff', // For Text colour & default colour is #fff (White)
+	fillTextAlign: 1.30, // for alignment of inner text position i.e. higher values gives closer view to center & default text alignment is 1.85 i.e closer to center
+	fillTextPosition: 'inner', // 'horizontal' or 'vertical' or 'inner' & default text position is 'horizontal' position i.e. outside the canvas
+	doughnutHoleSize: 55, // Percentage of doughnut size within the canvas & default doughnut size is null
+	doughnutHoleColor: '#fff', // For doughnut colour & default colour is #fff (White)
+	offset: 1, // Offeset between two segments & default value is null
+	pie: 'normal', // if the pie graph is single stroke then we will add the object key as "stroke" & default is normal as simple as pie graph
+	isStrokePie: {
+		stroke: 20, // Define the stroke of pie graph. It takes number value & default value is 20
+		overlayStroke: true, // Define the background stroke within pie graph. It takes boolean value & default value is false
+		overlayStrokeColor: '#eee', // Define the background stroke colour within pie graph & default value is #eee (Grey)
+		strokeStartEndPoints: 'Yes', // Define the start and end point of pie graph & default value is No
+		strokeAnimation: true, // Used for animation. It takes boolean value & default value is true
+		strokeAnimationSpeed: 40, // Used for animation speed in miliisecond. It takes number & default value is 20ms
+		fontSize: '60px', // Used to define text font size & default value is 60px
+		textAlignement: 'center', // Used for position of text within the pie graph & default value is 'center'
+		fontFamily: 'Arial', // Define the text font family & the default value is 'Arial'
+		fontWeight: 'bold' //  Define the font weight of the text & the default value is 'bold'
+	}};
+	generatePieGraph('canvas1', obj1);
+
+
+var obj2 = {
+	values: [{{ chart_crit }}, {{ chart_surp }}, {{ chart_safe }}],
+	colors: ['#dc3545', '#0d6efd', '#17a2b8'],
+	animation: true, // Takes boolean value & default behavious is false
+	animationSpeed: 30, // Time in miliisecond & default animation speed is 20ms
+	fillTextData: true, // Takes boolean value & text is not generate by default
+	fillTextColor: '#fff', // For Text colour & default colour is #fff (White)
+	fillTextAlign: 1.30, // for alignment of inner text position i.e. higher values gives closer view to center & default text alignment is 1.85 i.e closer to center
+	fillTextPosition: 'inner', // 'horizontal' or 'vertical' or 'inner' & default text position is 'horizontal' position i.e. outside the canvas
+	doughnutHoleSize: 55, // Percentage of doughnut size within the canvas & default doughnut size is null
+	doughnutHoleColor: '#fff', // For doughnut colour & default colour is #fff (White)
+	offset: 1, // Offeset between two segments & default value is null
+	pie: 'normal', // if the pie graph is single stroke then we will add the object key as "stroke" & default is normal as simple as pie graph
+	isStrokePie: {
+		stroke: 20, // Define the stroke of pie graph. It takes number value & default value is 20
+		overlayStroke: true, // Define the background stroke within pie graph. It takes boolean value & default value is false
+		overlayStrokeColor: '#eee', // Define the background stroke colour within pie graph & default value is #eee (Grey)
+		strokeStartEndPoints: 'Yes', // Define the start and end point of pie graph & default value is No
+		strokeAnimation: true, // Used for animation. It takes boolean value & default value is true
+		strokeAnimationSpeed: 40, // Used for animation speed in miliisecond. It takes number & default value is 20ms
+		fontSize: '60px', // Used to define text font size & default value is 60px
+		textAlignement: 'center', // Used for position of text within the pie graph & default value is 'center'
+		fontFamily: 'Arial', // Define the text font family & the default value is 'Arial'
+		fontWeight: 'bold' //  Define the font weight of the text & the default value is 'bold'
+	}};
+	generatePieGraph('canvas2', obj2);
+
+var obj3 = {
+	pie: 'stroke',
+	values: [{{ cent_sto|floatformat:0 }}],
+	colors: ['#2BBBAD'],
+	isStrokePie: {
+		stroke: 20,
+		overlayStroke: true,
+		overlayStrokeColor: '#eee',
+		strokeStartEndPoints: 'Yes',
+		strokeAnimation: true,
+		strokeAnimationSpeed: 20,
+		fontSize: '60px',
+		textAlignement: 'center',
+		fontFamily: 'Arial',
+		fontWeight: 'bold'
+	}
+};
+generatePieGraph('canvas3', obj3);
+</script>
+</html>

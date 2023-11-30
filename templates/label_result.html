@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'assets/fontawesome/css/all.css' %}">
+    <script src="{% static 'assets/js/qrcode2.js' %}"></script>
+    <script src="{% static 'assets/js/qrcode.js' %}"></script>
+    <title>{{ title }}</title>
+    <style>
+        .card-deck {
+        display: flex;
+        flex-wrap: wrap;
+        }
+        @media print {
+        .noprint {
+            display:none;
+          }
+        }
+    </style>
+</head>
+<body>
+            <div class="card-deck">{% for data in object_list %}
+                <div style="width: 29% !important; " >
+                    <div class="card m-1">
+                        <div class="card-header border-0 bg-transparent">
+                            <table style="min-width: 100%">
+                                <!-- <tr style="font-size: 10px;"><th>Location</th><th>:&nbsp;{{ data.no_loc }}</th></tr> -->
+                                <!-- panggil dari model lain -->
+                                {% if data.status == "UL" or data.status == "HU" %}
+                                    {% for product in tb_temp %}
+                                        {% if product.no_loc_id == data.no_loc %}
+                                            <tr style="font-size: 10px;" ><th style="min-width: 18%" >Part No.</th><th colspan="4">:&nbsp;{{ product.prod_code_id }}</th></tr>
+                                            <tr style="font-size: 10px;"><th>Desc.</th><th colspan="4">:&nbsp;{{ product.prod_code.prod_desc }}</th></tr>
+                                            <tr style="font-size: 8px;"><td rowspan="3"><div id="id1{{ forloop.counter0 }}"></div></td><td style="width:16%">Supplier</td><td colspan="3">:&nbsp;{{ product.prod_code.supplier }}</td></tr>
+                                            <tr style="font-size: 8px;"><td style="width:20%">Min. Stock</td><td style="width:20%">:&nbsp;{{ product.prod_code.stock_min }}</td><td style="width:20%">Max. Stock</td><td>:&nbsp;{{ product.prod_code.stock_max }}</td></tr>
+                                            <tr style="font-size: 8px;"><td>L. Time</td><td>:&nbsp;{{ product.prod_code.l_time_days }} hari</td><th>Loc.</th><th>:&nbsp;{{ data.no_loc|slice:":3" }}.{{ data.no_loc|slice:"3:5" }}.{{ data.no_loc|slice:"5:7" }}</th></tr>
+                                            <script>
+                                                var qrcode = new QRCode("id1{{ forloop.counter0 }}", {
+                                                    text: "{{ data.no_loc }}",
+                                                    width: 32,
+                                                    height: 32,
+                                                    colorDark : "#000",
+                                                    colorLight : "#fff",
+                                                    correctLevel : QRCode.CorrectLevel.L,
+                                                });
+                                            </script>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                <tr style="font-size: 10px;"><th style="min-width: 18%" >Part No.</th><th colspan="4">:</th></tr>
+                                <tr style="font-size: 10px;"><th>Desc.</th><th colspan="4">:</th></tr>
+                                <tr style="font-size: 8px;"><td rowspan="3"><div id="id2{{ forloop.counter0 }}"></div></td><td style="width:20%">Supplier</td><td colspan="3">:</td></tr>
+                                <tr style="font-size: 8px;"><td style="width:20%">Min. Stock</td><td style="width:20%">:</td><td style="width:20%">Max. Stock</td><td>:</td></tr>
+                                <tr style="font-size: 8px;"><td>L. Time</td><td>:</td><th>Loc.</th><th>:&nbsp;{{ data.no_loc|slice:":3" }}.{{ data.no_loc|slice:"3:5" }}.{{ data.no_loc|slice:"5:7" }}</th></tr>
+                                <script>
+                                    var qrcode = new QRCode("id2{{ forloop.counter0 }}", {
+                                        text: "{{ data.no_loc }}",
+                                        width: 32,
+                                        height: 32,
+                                        colorDark : "#000",
+                                        colorLight : "#fff",
+                                        correctLevel : QRCode.CorrectLevel.L,
+                                    });
+                                </script>
+                                {% endif %}
+                                <!-- end tag dari model lain -->
+                            </table>
+                        </div><button onclick="localStorage.removeItem('${key}'); this.parentElement.parentElement.remove()" class="noprint btn btn-sm btn-danger '${key}'"><i class='fa fa-trash'></i></button>
+                    </div>
+                </div>{% endfor %}
+            </div>
+</body>
+<script>
+document.querySelector('table').addEventListener('click', function(e) {
+    if (e.target.tagName == "BUTTON") {
+    const tr = e.target.closest('tr');
+    tr.remove();
+  }
+});
+</script>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+</head>
+<body>
+    <div class="container px-4 py-5">
+        <div class="container"><p><h2>{{ header }}</h2><p>
+            <hr class="hr" />
+            <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
+            <hr class="hr">
+                {% if messages %}
+                {% for messages in messages %}
+                {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+                <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'UpdateTransfer' data.id %}"></a></div>
+                {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'UpdateTransfer' data.id %}"></a></div>
+                {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+                <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'UpdateTransfer' data.id %}"></a></div>
+                {% endif %}
+                {% endfor %}
+                {% else %}<div id="alert"></div>
+                {% endif %}
+                <!-- alert -->
+            <form name="myForm" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="card p-2">
+                    <div class="card-header border-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <!-- <table class="table table-hover table-bordered table-sm"> -->
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th style="width: 20%;">No. Prod.</th>
+                                        <th>Product Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>{{ data.prod_code_id }}</td>
+                                        <td>{{ data.prod_code.prod_desc }}</td>
+                                     </tr>
+                                </tbody>
+                            </table>
+                            <table class="table table-bordered table-sm">
+                                    <thead class="table-primary">
+                                        <tr>
+                                            <th style="width: 10%;">Assign</th>
+                                            <th>From Location</th>
+                                            <th style="width: 10%;">Qty</th>
+                                            <th>To Location</th>
+                                            <th>Qty TF.</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><!--<td><input class="form-control shadow-none" type="text" id="no_loc1" name="no_loc1" placeholder="Enter No. Loc." /></td>
+                                            <td><input class="form-control shadow-none" type="text" id="no_loc2" name="no_loc2" placeholder="Enter No. Loc." /></td>
+                                            <td><input class="form-control shadow-none" type="text" id="qty" name="qty" placeholder="Enter Qty." /></td>-->
+                                            <td>{{ data.no_loc.assign }}</td>
+                                            <td>{{ data.no_loc_id }}</td>
+                                            <td>{{ data.qty }}</td>
+                                            <td class="h-formfield-uppercase"><input type="hidden" name="id" value="{{ data.id }}"/>
+                                                <input type="hidden" name="prod_code" value="{{ data.prod_code_id }}"/>
+                                                <input type="hidden" name="no_loc1" value="{{ data.no_loc_id }}"/>
+                                                <input class="form-control form-control-sm shadow-none" type="text" id="no_loc2" name="no_loc2" placeholder="Enter No. Loc." /></td>
+                                            <td><input class="form-control form-control-sm shadow-none" min=1 type="number" id="qty" name="qty" placeholder=0 onkeypress="return isNumberKey(event)"/></td>
+                                        </tr>
+                                    </tbody>
+                            </table>
+                            <div class="hstack gap-1">
+                                <button class="btn btn-primary btn-sm px-2" type="submit">Transfer</button>
+                                <a class="btn btn-secondary btn-sm px-2" href="{% url 'ResultTransfer' %}?prod_code={{ data.prod_code_id }}">Cancel</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="card p-2 mt-3">
+                <div class="card-header border-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <caption>
+                                <!-- pagination after result-->
+                            {% if object_list.has_other_pages %}
+                            <ul class="pagination justify-content-center pagination-sm">
+                                {% if object_list.has_previous %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page=1">First page</a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.previous_page_number }}">
+                                    <span aria-hidden="true">&laquo;</span></a></li>
+                                {% endif %} {% for num in object_list.paginator.page_range %} {% if object_list.number == num %}
+                                <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span> </li>
+                                {% elif num > object_list.number|add:'-3' and num < object_list.number|add:'3' %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ num }}">{{ num }}</a></li>
+                                {% endif %} {% endfor %} {% if object_list.has_next %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.next_page_number }}">
+                                    <span aria-hidden="true">&raquo;</span></a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.paginator.num_pages }}">Last page</a> </li>
+                                {% endif %}
+                            </ul>
+                            {% endif %}
+                            <!-- end pagination -->
+                            </caption>
+                            <thead class="table-secondary">
+                            <tr>
+                                <th style="width: 10%;">Assign</th>
+                                <th>Location</th>
+                                <th>No. Prod</th>
+                                <th>Product Description</th>
+                                <th>Qty</th>
+                            </tr>
+                            </thead>
+                            <tbody>{% for data in object_list %}
+                            <tr>
+                                <td class="border-end">{{ data.no_loc.assign }}</td>
+                                <td>{{ data.no_loc_id }}</td>
+                                <td>{{ data.prod_code_id }}</td>
+                                <td>{{ data.prod_code.prod_desc }}</td>
+                                <td>{{ data.qty }}</td>
+                            </tr>{% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+$("form[name=myForm]").submit(function() {
+    if ($('#no_loc2').val() == "" || $('#qty').val() == ""){
+        $("#alert").html("<div class='alert alert-warning border-0' role='alert'>Fill the form to be submitted.</div>");
+        return false;
+    }
+});
+</script>
+<script>
+function isNumberKey(evt) {
+    var charCode = (evt.which) ? evt.which : evt.keyCode
+    if (charCode > 31 && (charCode < 48 || charCode > 57))
+    return false;
+    return true;
+}
+</script>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+    <style>
+    table {
+        width: 50%;
+        counter-reset: row-num -1;
+    }
+    table tr {
+        counter-increment: row-num;
+    }
+    table tr td:first-child::before {
+        content: counter(row-num) ". ";
+    }
+    </style>
+</head>
+<body>
+<div class="container px-4 py-5">
+    <div class="container"><p><h2>{{ header}}</h2><p>
+        <hr class="hr" />
+        <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
+        <hr class="hr" />
+        <!-- alert -->
+        {% if messages %}
+        {% for messages in messages %}
+        {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+        <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewStockOpname' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+        <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewStockOpname' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+        <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewStockOpname' %}"></a></div>
+        {% endif %}
+        {% endfor %}
+        {% else %}<div id="alert"></div>
+        {% endif %}
+        <!-- alert -->
+        <div class="card p-2"><!-- <div class="card shadow"> -->
+            <div class="card-header border-0">
+                <div class="table-responsive">
+                    {% if object_list %}
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr class="table-primary">
+                                <th>No.</th>
+                                <th>No. Location</th>
+                                <th>No. Product</th>
+                                <th>Product Description</th>
+                                <th>Qty</th>
+                                <th style="width: 15%;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for data in object_list %}
+                            <tr>
+                                <td class="border-end"></td>
+                                <td>{{ data.no_loc_id }}</td>
+                                {% if data.prod_code_id == None %}
+                                <form name="myForm" onsubmit="return validateForm()" action="{% url 'AddRsvStockOpname' data.id %}" method="POST" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <td>
+                                        <input type="hidden" name="id" value="{{ data.id }}"/>
+                                        <input type="hidden" name="no_loc" value="{{ data.no_loc_id }}"/>
+                                        <input class="form-control form-control-sm shadow-none" type="text" id="prod_code" name="prod_code" placeholder="Enter No. Prod." />
+                                    </td>
+                                    <!--<td></td>
+                                    <td>
+                                        <input class="form-control form-control-sm shadow-none" min=0 type="number" id="qty" name="qty" placeholder="0" />
+                                    </td> -->
+                                    <td><button class="btn btn-primary btn-sm px-3" type="submit">Save</button></td>
+                                </form>
+                                {% else %}
+                                <td>{{ data.prod_code_id }}</td>
+                                <td>{{ data.prod_code.prod_desc }}</td>
+                                <td><form name="myForm" onsubmit="return validateForm()" action="{% url 'UpdateStockOpname' data.id %}" method="POST" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="id" value="{{ data.id }}"/>
+                                    <input type="hidden" name="no_loc" value="{{ data.no_loc_id }}"/>
+                                    <input class="form-control form-control-sm shadow-none" min=0 type="number" id="qty" name="qty" placeholder="0" onkeypress="return isNumberKey(event)"/>
+                                    <td><button class="btn btn-primary btn-sm px-3" type="submit">Save</button>
+                                    <a class="btn btn-secondary btn-sm px-2" href="{% url 'ViewStockOpname' %}">Cancel</a></td>
+                                    </form>
+                                </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+$("form[name=myForm]").submit(function() {
+    if ($("#qty").val() == ""){
+        $("#alert").html("<div class='alert alert-warning border-0' role='alert'>Fill the form to be submitted.</div>");
+        return false;
+    }
+});
+</script>
+<script>
+function isNumberKey(evt) {
+    var charCode = (evt.which) ? evt.which : evt.keyCode
+    if (charCode > 31 && (charCode < 48 || charCode > 57))
+    return false;
+    return true;
+}
+</script>
+</html>

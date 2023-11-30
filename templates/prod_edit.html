@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+</head>
+<body>
+<div class="container px-4 py-5">
+    <div class="container"><p><h2>{{ header }}</h2><p>
+        <hr class="hr" />
+        <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
+        &nbsp;<div class="vr"></div>&nbsp;
+        <a class="btn btn-link" href="{% url 'AddProduct' %}">New Product</a>
+        &nbsp;<div class="vr"></div>&nbsp;
+        <a class="btn btn-link" href="{% url 'ViewProduct' %}">List Product</a>
+        <hr class="hr" />
+        <form name="myForm" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <!-- alert -->
+            {% if messages %}
+            {% for messages in messages %}
+            {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+            <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                <a class="btn-close" aria-label="Close" href="{% url 'EditProduct' data.prod_code %}"></a></div>
+            {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+            <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                <a class="btn-close" aria-label="Close" href="{% url 'EditProduct' data.prod_code %}"></a></div>
+            {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+            <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                <a class="btn-close" aria-label="Close" href="{% url 'EditProduct' data.prod_code %}"></a></div>
+            {% endif %}
+            {% endfor %}
+            {% else %}<div id="alert"></div>
+            {% endif %}
+            <!-- alert -->
+            <div class="card p-2"><!-- <div class="card shadow"> -->
+                <div class="card-header border-0">
+                    <div class="table-responsive">
+                        <h5 class="card-title mx-2">{{ data.prod_code }}</h5>
+                        <table class="table table-hover table-sm table-bordered">
+                            <thead>
+                            </thead>
+                            <tbody>
+                            <tr class="h-formfield-uppercase">
+                                <th scope="row" colspan="2">Product Description</th>
+                                <td colspan="2"><input type="hidden" name="prod_code" value="{{ data.prod_code }}" />
+                                    <input class="form-control form-control-sm shadow-none" type="text" id="prod_desc" name="prod_desc" placeholder="Enter Prod. Desc." value="{{ data.prod_desc }}" /></td>
+                            </tr>
+                            <tr class="h-formfield-uppercase">
+                                <th scope="row" colspan="2">Supplier</th>
+                                <td colspan="2"><input class="form-control form-control-sm shadow-none" type="text" id="supplier" name="supplier" placeholder="Enter Supp. Name" value="{{ data.supplier }}" /></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Min. Stock</th>
+                                <td><input class="form-control form-control-sm shadow-none" min=1 type="number" id="stock_min" name="stock_min" placeholder=0 value="{{ data.stock_min }}" onkeypress="return isNumberKey(event)"/></td>
+                                <th scope="row">Max. Stock</th>
+                                <td><input class="form-control form-control-sm shadow-none" min=1 type="number" id="stock_max" name="stock_max" placeholder=0 value="{{ data.stock_max }}" onkeypress="return isNumberKey(event)"/></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Lead Time (Days)</th>
+                                <td><input class="form-control form-control-sm shadow-none" min=1 type="number" id="l_time_days" name="l_time_days" placeholder=0 value="{{ data.l_time_days }}" onkeypress="return isNumberKey(event)"/></td>
+                                <th scope="row">Pack</th>
+                                <td><input class="form-control form-control-sm shadow-none" min=1 type="number" id="pack_size" name="pack_size" placeholder=0 value="{{ data.pack_size }}" onkeypress="return isNumberKey(event)"/></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Status</th>
+                                <td>
+                                    <select class="form-select form-select-sm shadow-none" name="status" >
+                                        {% if object_list %}
+                                        <option value="ACTIVE">ACTIVE</option>
+                                        <option value="BLOCK">BLOCK</option>
+                                        {% else %}
+                                        <option value="ACTIVE">ACTIVE</option>
+                                        {% endif %}
+                                    </select>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <div class="hstack gap-1">
+                            <button class="btn btn-primary btn-sm px-3" type="submit">Save</button>
+                            <a class="btn btn-secondary btn-sm px-2" href="{% url 'ResultProduct' %}?q={{ data.prod_code }}">Cancel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+<script>
+$("form[name=myForm]").submit(function() {
+    if ($("#prod_desc").val() == "" || $("#supplier").val() == "" || $("#stock_min").val() == "" || $("#stock_max").val() == "" || $("#l_time_days").val() == "" || $("#pack_size").val() == ""){
+        $("#alert").html("<div class='alert alert-warning border-0' role='alert'>Fill the form to be submitted.</div>");
+        return false;
+    }
+});
+</script>
+<script>
+function isNumberKey(evt) {
+    var charCode = (evt.which) ? evt.which : evt.keyCode
+    if (charCode > 31 && (charCode < 48 || charCode > 57))
+    return false;
+    return true;
+}
+</script>
+</html>

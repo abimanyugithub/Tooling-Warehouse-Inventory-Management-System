@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'assets/fontawesome/css/all.css' %}">
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+</head>
+<body>
+<div class="container px-4 py-5">
+    <div class="container"><p><h2>{{ header }}</h2><p>
+        <hr class="hr" />
+        <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
+        &nbsp;<div class="vr"></div>&nbsp;
+        <a class="btn btn-link" href="{% url 'AddLocation' %}">New Location</a>
+        <hr class="hr" />
+        <!-- alert -->
+        {% if messages %}
+        {% for messages in messages %}
+        {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+        <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewLocation' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+        <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewLocation' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+        <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewLocation' %}"></a></div>
+        {% endif %}
+        {% endfor %}
+        {% else %}<div id="alert"></div>
+        {% endif %}
+        <!-- alert -->
+
+        <!-- Card summary -->
+        <div class="card p-2">
+            <div class="card-header border-0">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <caption>Summary</caption>
+                        <tbody class="table-light">
+                        <tr>
+                            <td>
+                                <div class="hstack gap-1">Total: {{ total }}
+                                    <div class="ms-auto"><span style='color:#ffbb33'>
+                                    <i class="fa fa-circle"></i></span>&nbsp;Free: {{ free }} ({{ free_cent|floatformat:0 }}%)</div>
+                                    &nbsp;<div class="vr"></div>&nbsp;<span style='color:#33b5e5'>
+                                    <i class="fa fa-circle"></i></span>&nbsp;Used: {{ used }} ({{ used_cent|floatformat:0 }}%)
+                                    &nbsp;<div class="vr"></div>&nbsp;<span class='text-danger'><i class="fa fa-circle"></i></span> Held: {{ held }} ({{ held_cent|floatformat:0 }}%)
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table filter -->
+        <div class="card mt-3 p-2">
+            <div class="card-header border-0">
+                <form name="myForm" action="{% url 'ResultLocation' %}" method="GET" enctype="multipart/form-data">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tbody>
+                            <tr>
+                                <td>
+                                    <span class="h-formfield-uppercase">
+                                        <input class="form-control shadow-none" type="text" id="no_loc" name="no_loc" placeholder="No. Location" />
+                                    </span>
+                                </td>
+                                <td>
+                                    <select class="form-select shadow-none fw-bold" name="assign">
+                                        <option value="" disabled selected hidden>Assign</option>
+                                        <!-- # untuk filter tanpa "no_loc", "assign" wajib diisi -->
+                                        <option disabled>{{ value|default:"---" }}</option>
+                                        <option value="P">PRIMARY LOC.</option>
+                                        <option value="R">RESERVE LOC.</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select class="form-select shadow-none fw-bold" name="storage">
+                                        <option value="" disabled selected hidden>Storage</option>
+                                        <option value="">ALL</option>
+                                        <option disabled>{{ value|default:"---" }}</option>
+                                        <!-- <option value="CT">CABINET</option>
+                                        <option value="CC">CABINET (CHEMICAL)</option> -->
+                                        <option value="FR">FLOOR</option>
+                                        <option value="RK">RACK</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select class="form-select shadow-none fw-bold" name="area">
+                                        <option value="" disabled selected hidden>Area</option>
+                                        <option value="">ALL</option>
+                                        <option disabled>{{ value|default:"---" }}</option>
+                                        <option value="BL">BLOW</option>
+                                        <option value="IN">INJECTION</option>
+                                        <option value="CH">CHEMICAL (MAINTENANCE)</option>
+                                        <option value="CE">CONSUMABLE ELECTRICAL</option>
+                                        <option value="CM">CONSUMABLE MECHANICAL</option>
+                                        <option value="VA">VACUUM</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select class="form-select shadow-none fw-bold" name="status" >
+                                        <option value="" disabled selected hidden>Status</option>
+                                        <option value="">ALL</option>
+                                        <option disabled>{{ value|default:"---" }}</option>
+                                        <option value="FL">FREE</option>
+                                        <!-- <option value="DL">DELETED</option> -->
+                                        <option value="UL">USED</option>
+                                        <option value="HU">HELD</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <div class="hstack gap-1">
+                            <button class="btn btn-primary btn-sm px-3" type="submit">Search</button>
+                            <a class="btn btn-secondary btn-sm px-3" href="{% url 'ViewLocation' %}">Reset</a>
+                        </div>
+                    </div>
+                </form>
+                <hr class="hr" />
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <caption><!-- pagination before result -->
+                            {% if page_obj.has_other_pages %}
+                            <ul class="pagination justify-content-center pagination-sm">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page=1">First page</a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ page_obj.previous_page_number }}">
+                                    <span aria-hidden="true">&laquo;</span></a></li>
+                                {% endif %} {% for num in page_obj.paginator.page_range %} {% if page_obj.number == num %}
+                                <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span> </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ num }}">{{ num }}</a></li>
+                                {% endif %} {% endfor %} {% if page_obj.has_next %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ page_obj.next_page_number }}"><span aria-hidden="true">&raquo;</span></a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ page_obj.paginator.num_pages }}">Last page</a> </li>
+                                {% endif %}
+                            </ul><!-- end pagination -->
+                            <!-- pagination after result-->
+                            {% elif object_list.has_other_pages %}
+                            <ul class="pagination justify-content-center pagination-sm">
+                                {% if object_list.has_previous %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page=1&assign={{ request.GET.assign }}&storage={{ request.GET.storage }}&area={{ request.GET.area }}&status={{ request.GET.status }}">First page</a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.previous_page_number }}&assign={{ request.GET.assign }}&storage={{ request.GET.storage }}&area={{ request.GET.area }}&status={{ request.GET.status }}">
+                                    <span aria-hidden="true">&laquo;</span></a></li>
+                                {% endif %} {% for num in object_list.paginator.page_range %} {% if object_list.number == num %}
+                                <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span> </li>
+                                {% elif num > object_list.number|add:'-3' and num < object_list.number|add:'3' %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ num }}&assign={{ request.GET.assign }}&storage={{ request.GET.storage }}&area={{ request.GET.area }}&status={{ request.GET.status }}">{{ num }}</a></li>
+                                {% endif %} {% endfor %} {% if object_list.has_next %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.next_page_number }}&assign={{ request.GET.assign }}&storage={{ request.GET.storage }}&area={{ request.GET.area }}&status={{ request.GET.status }}">
+                                    <span aria-hidden="true">&raquo;</span></a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ object_list.paginator.num_pages }}&no_loc={{ request.GET.no_loc }}&assign={{ request.GET.assign }}&storage={{ request.GET.storage }}&area={{ request.GET.area }}&status={{ request.GET.status }}">Last page</a> </li>
+                                {% endif %}
+                            </ul>
+                            {% endif %}
+                            <!-- end pagination -->
+                        </caption>
+                        <thead>
+                        <tr class="table-secondary">
+                            <th>No.</th>
+                            <th style="width: 15%;">No. Location</th>
+                            <th style="width: 5%;">Assign</th>
+                            <th>Storage</th>
+                            <th>Tooling Area Part</th>
+                            <th>Status</th>
+                            <th style="width: 15%;">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>{% for data in object_list %}
+                        <tr>
+                            <td class="border-end" >{% if page_obj %}
+                                {{ page_obj.start_index|add:forloop.counter0 }}
+                                {% else %}
+                                {{ object_list.start_index|add:forloop.counter0 }}
+                                {% endif %}
+                            </td>
+                            <!-- https://stackoverflow.com/questions/19886973/display-item-numbers-with-django-paginator -->
+                            <td>{{ data.no_loc }}</td>
+                            <td>{{ data.assign }}</td>
+                            <td>{% if data.storage == 'CT' %}
+                                CABINET
+                                {% elif data.storage == 'CC' %}
+                                CABINET CHEMICAL
+                                {% elif data.storage == 'FR' %}
+                                FLOOR
+                                {% else %}
+                                RACK
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if data.area == 'BL' %}
+                                BLOW
+                                {% elif data.area == 'IN' %}
+                                INJECTION
+                                {% elif data.area == 'CH' %}
+                                CHEMICAL (MAINTENANCE)
+                                {% elif data.area == 'CE' %}
+                                CONSUMABLE ELECTRICAL
+                                {% elif data.area == 'CM' %}
+                                CONSUMABLE MECHANICAL
+                                {% else %}
+                                VACUUM
+                                {% endif %}
+                            </td>
+                            <td>{% if data.status == 'FL' %}
+                                FREE
+                                {% elif data.status == 'UL' %}
+                                USED
+                                {% elif data.status == 'HF' or data.status == 'HU' %}
+                                HELD
+                                {% else %}
+                                DELETED
+                                {% endif %}
+                            </td>
+                            <td>{% if data.status == 'DL' %}
+                                <form method="POST" action="{% url 'DeleteLocation' data.no_loc %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" value="FL" name="status" />
+                                    <button class="btn btn-primary btn-sm px-2" type="submit">Restore</button>
+                                    <a class="btn btn-secondary btn-sm px-3" href="{% url 'ViewLocation' %}">Cancel</a>
+                                </form>
+                                {% else %}
+                                <!-- <div class="hstack gap-1"> -->
+                                <a class="btn btn-primary btn-sm px-3" href="{% url 'EditLocation' data.no_loc %}">Edit</a>
+                                    <!-- <a class="btn btn-danger btn-sm px-2" data-toggle="modal" href="{% url 'DeleteLocation' data.no_loc %}" data-target="#modal">Delete</a> -->
+                                <a class="btn btn-danger btn-sm px-2" data-bs-toggle="modal" data-bs-target="#id-{{ data.no_loc|cut:'.' }}">Delete</a>
+
+                                <!-- Modal -->
+                                <div class="modal fade" id="id-{{ data.no_loc|cut:'.' }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h1 class="modal-title fs-5" id="exampleModalLabel"><i class="fa fa-exclamation-circle" style="color:#243c64;"></i>&nbsp;Delete location?</h1>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                {{ data.no_loc }}
+                                            </div>
+                                            <div class="modal-footer">
+                                                <form method="POST" action="{% url 'DeleteLocation' data.no_loc %}" enctype="multipart/form-data">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" value="DL" name="status" />
+                                                    <input class="btn btn-sm btn-danger" type="submit" value="Delete">
+                                                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>{% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+<script>
+// $('#myForm') panggil by id
+// $(".myForm") panggil by class
+// $("form") panggil by element
+// $("form[name=myForm]") by name
+$("form[name=myForm]").submit(function() {
+    if ($("input").val() == "" && !$("select").val()){
+        $("#alert").html("<div class='alert alert-warning border-0' role='alert'>Fill the form to be submitted.</div>");
+        return false;
+    }
+});
+</script>
+<script>
+// fungsi disable/enable input when select option
+$("select").change(function() {
+    if ($(this).val() == 0 || $(this).val() ) {
+        $("input").val('').attr("disabled", true);
+    } else {
+        $("input").removeAttr("disabled");
+    }
+}).trigger("change");
+</script>
+<script>
+// fungsi disable/enable select when input fill
+$("input").change(function() {
+    // If the element *has* a value
+    if ($(this).val()) {
+        // Should also perform validation here
+        $("select").attr("disabled", true);
+    }
+    // If the element doesn't have a value
+    else {
+        // Clear the value of all next steps and disable
+        $("select").removeAttr("disabled");
+    }
+});
+</script>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+</head>
+<body>
+<div class="container px-4 py-5">
+    <div class="container"><p><h2>{{ header }}</h2><p>
+        <hr class="hr" />
+        <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
+        <hr class="hr" />
+        <!-- alert -->
+        {% if messages %}
+        {% for messages in messages %}
+        {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+        <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewPicking' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+        <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewPicking' %}"></a></div>
+        {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+        <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+            <a class="btn-close" aria-label="Close" href="{% url 'ViewPicking' %}"></a></div>
+        {% endif %}
+        {% endfor %}
+        {% else %}<div id="alert"></div>
+        {% endif %}
+        <!-- alert -->
+        <div class="card p-2">
+            <div class="card-header border-0">
+                <form name="myForm" action="{% url 'ResultPicking' %}" method="GET" enctype="multipart/form-data">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tbody>
+                            <tr>
+                                <td>
+                                    <span class="h-formfield-uppercase">
+                                        <input class="form-control shadow-none" type="text" id="prod_code" name="prod_code" placeholder="No. Product" />
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="h-formfield-uppercase">
+                                        <input class="form-control shadow-none" type="text" id="prod_desc" name="prod_desc" placeholder="Product Desc." />
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="h-formfield-uppercase">
+                                        <input class="form-control shadow-none" type="text" id="no_loc" name="no_loc" placeholder="No. Location" />
+                                    </span>
+                                </td>
+
+                            </tr>
+                            </tbody>
+                        </table>
+                        <div class="hstack gap-1">
+                            <button class="btn btn-primary btn-sm px-3" type="submit">Search</button>
+                            <a class="btn btn-secondary btn-sm px-3" href="{% url 'ViewPicking' %}">Reset</a>
+                        </div>
+                    </div>
+                </form>
+                <hr class="hr" />
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <caption>
+                            {% if page_obj.has_other_pages %}
+                            <ul class="pagination justify-content-center pagination-sm">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page=1">First page</a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ page_obj.previous_page_number }}">
+                                    <span aria-hidden="true">&laquo;</span></a></li>
+                                {% endif %} {% for num in page_obj.paginator.page_range %} {% if page_obj.number == num %}
+                                <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span> </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ num }}">{{ num }}</a></li>
+                                {% endif %} {% endfor %} {% if page_obj.has_next %}
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ page_obj.next_page_number }}"><span aria-hidden="true">&raquo;</span></a></li>
+                                <li class="page-item"><a class="page-link shadow-none" href="?page={{ page_obj.paginator.num_pages }}">Last page</a> </li>
+                                {% endif %}
+                            </ul><!-- end pagination -->
+                            {% endif %}
+                        </caption>
+                        <thead>{% if object_list %}
+                            <tr class="table-secondary">
+                                <th>No.</th>
+                                <th>No. Product</th>
+                                <th>Prod. Description</th>
+                                <th>Qty.</th>
+                                <th>No. Location</th>
+                                <th>Storage</th>
+                                <th>Tooling Area Part</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>{% for data in object_list %}
+                            <tr>
+                                <td class="border-end">{{ object_list.start_index|add:forloop.counter0 }}</td>
+                                <td>{{ data.prod_code_id }}</td>
+                                <td>{{ data.prod_code.prod_desc }}</td>
+                                <td>{{ data.qty }}</td>
+                                <td>{{ data.no_loc_id }}</td>
+                                <td>{% if data.no_loc.storage == 'CT' %}
+                                    CABINET
+                                    {% elif data.no_loc.storage == 'CC' %}
+                                    CABINET CHEMICAL
+                                    {% elif data.no_loc.storage == 'FR' %}
+                                    FLOOR
+                                    {% elif data.no_loc.storage == 'RK' %}
+                                    RACK
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if data.no_loc.area == 'BL' %}
+                                    BLOW
+                                    {% elif data.no_loc.area == 'IN' %}
+                                    INJECTION
+                                    {% elif data.no_loc.area == 'CH' %}
+                                    CHEMICAL (MAINTENANCE)
+                                    {% elif data.no_loc.area == 'CE' %}
+                                    CONSUMABLE ELECTRICAL
+                                    {% elif data.no_loc.area == 'CM' %}
+                                    CONSUMABLE MECHANICAL
+                                    {% elif data.no_loc.area == 'VA' %}
+                                    VACUUM
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <!-- <div class="hstack gap-1"> -->
+                                    <a class="btn btn-primary btn-sm px-3" href="{% url 'UpdatePicking' data.id %}">Take</a>
+                                       <!-- &nbsp;<div class="vr"></div>&nbsp; -->
+                                    <a class="btn btn-secondary btn-sm px-2" href="">Detail</a>
+                                    <!-- </div> -->
+                                </td>
+                            </tr>{% endfor %}{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+$("form[name=myForm]").submit(function() {
+    if ($('#prod_code').val() == "" && $('#prod_desc').val() == "" && $('#no_loc').val() == ""  ){
+        $("#alert").html("<div class='alert alert-warning border-0' role='alert'>Fill the form to be submitted.</div>");
+        return false;
+    }
+});
+</script>
+<script>
+// fungsi disable/enable select when input fill
+$("#no_loc").change(function() {
+    // If the element *has* a value
+    if ($(this).val()) {
+        // Should also perform validation here
+        $("select").attr("disabled", true);
+        $("#prod_code").attr("disabled", true);
+        $("#prod_desc").attr("disabled", true);
+    }
+    // If the element doesn't have a value
+    else {
+        // Clear the value of all next steps and disable
+        $("select").removeAttr("disabled");
+    }
+});
+</script>
+<script>
+// fungsi disable/enable select when input prod_code fill
+$("#prod_code").change(function() {
+    // If the element *has* a value
+    if ($(this).val()) {
+        // Should also perform validation here
+        $("select").attr("disabled", true);
+        $("#no_loc").attr("disabled", true);
+        $("#prod_desc").attr("disabled", true);
+    }
+    // If the element doesn't have a value
+    else {
+        // Clear the value of all next steps and disable
+        $("select").removeAttr("disabled");
+    }
+});
+</script>
+<script>
+// fungsi disable/enable select when input prod_desc fill
+$("#prod_desc").change(function() {
+    // If the element *has* a value
+    if ($(this).val()) {
+        // Should also perform validation here
+        $("select").attr("disabled", true);
+        $("#no_loc").attr("disabled", true);
+        $("#prod_code").attr("disabled", true);
+    }
+    // If the element doesn't have a value
+    else {
+        // Clear the value of all next steps and disable
+        $("select").removeAttr("disabled");
+    }
+});
+</script>
+</html>

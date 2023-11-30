@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body><form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+<table>
+    <thead>
+    <tr>
+        <th>Card Number</th>
+        <th>ID Employee</th>
+        <th>Name Employee</th>
+        <th>Dept.</th>
+        <th>Username</th>
+        <th>Password</th>
+        <th>Level</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td><input class="form-control" type="number" name="no_card" placeholder="Enter" /></td>
+        <td><input class="form-control" type="text" name="nik" placeholder="Enter " /></td>
+        <td><input class="form-control" type="text" name="nm_krywn" placeholder="Enter" /></td>
+        <td><input class="form-control" type="text" name="dept" placeholder="Enter " /></td>
+        <td><input class="form-control" type="text" name="usernm" placeholder="Enter " /></td>
+        <td><input class="form-control" type="text" name="passwd" placeholder="Enter" /></td>
+        <td><input class="form-control" type="text" name="level" placeholder="Enter" /></td>
+    </tr>
+    </tbody>
+</table><input class="btn btn-success" type="submit" value="Submit"></form>
+</body>
+</html>
