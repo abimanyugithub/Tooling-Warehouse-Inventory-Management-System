@@ -1,7 +1,7 @@
 from django.db import models
-from django.utils import timezone, dateformat
+from django.utils import timezone
 from django.utils.crypto import get_random_string
-from datetime import datetime, date
+from django.contrib.auth.models import User
 
 
 # Class UpperChar create upper string
@@ -87,17 +87,19 @@ class ModelTempProdLoc(models.Model):
         return super(ModelTempProdLoc, self).save(*args, **kwargs)
 
 
-class ModelUser(models.Model):
+class ModelUserUID(models.Model):
+    # user = models.OneToOneField(User, on_delete=models.CASCADE)
     nik = models.IntegerField(null=True)
-    no_card = models.IntegerField(null=True)
+    uid = models.IntegerField(null=True)
     nm_krywn = UpperChar(max_length=20, null=True)
     dept = UpperChar(max_length=10, null=True)
     usernm = LowerChar(max_length=10, null=True)
-    passwd = models.CharField(max_length=10, null=True)
     level = UpperChar(max_length=3, null=True)  # Superuser | sup, Administrator | adm, Standard | std
+    status = models.BooleanField(default=1, null=True)
+    joined = models.DateTimeField(default=timezone.now, blank=True)
 
     class Meta:
-        db_table = "tb_User"
+        db_table = "tb_UserUID"
 
 
 class ModelTransaction(models.Model):
@@ -114,8 +116,8 @@ class ModelTransaction(models.Model):
     qty_afr = models.IntegerField(null=True)  # qty after
     date_created = models.DateTimeField(default=timezone.now, blank=True)
     comment = models.CharField(max_length=160, null=True)
-    usernm = models.ForeignKey(ModelUser, on_delete=models.CASCADE, null=True)
-    #usrname = LowerChar(max_length=10, null=True)
+    #usernm = models.ForeignKey(ModelUser, on_delete=models.CASCADE, null=True)
+    usrname = LowerChar(max_length=10, null=True)
 
     class Meta:
         db_table = "tb_Transaction"

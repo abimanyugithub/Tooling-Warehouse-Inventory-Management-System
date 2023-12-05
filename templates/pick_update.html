@@ -36,7 +36,7 @@
 </head>
 <body>
     <div class="container px-4 py-5">
-        <div class="container"><p><h2>{{ header }}</h2><p>
+        <div class="container"><p><h2 class="fw-light">{{ header }}</h2><p>
             <hr class="hr" />
             <a class="btn btn-link" href="{% url 'MainMenu' %}">Main Menu</a>
             <hr class="hr" />
@@ -116,11 +116,11 @@
                                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                     </div>
                                                     <div class="modal-body">
-                                                        Please tap card
+                                                        Silahkan tempelkan kartu pada <strong>Card Reader RFID</strong>
                                                     </div>
                                                     <div class="modal-footer">
-                                                        <input class="form-control form-control-sm shadow-none" id="auth" name="auth" type="text" autofocus/>
-                                                        <button class="btn btn-primary btn-sm px-2" type="submit">Submit</button>
+                                                        <input class="form-control form-control-sm shadow-none" id="auth" name="auth" type="number" onchange="submit()" autofocus/>
+                                                        <!-- <button class="btn btn-primary btn-sm px-2" type="submit">Submit</button> -->
                                                         <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
                                                     </div>
                                                 </div>

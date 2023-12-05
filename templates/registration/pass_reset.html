@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <title>{{ title }}</title>
+<body>
+    <div class="container py-5">
+        <div class="container"><p><h2 class="fw-light">{{ header }}</h2><p>
+            <hr class="hr" />
+                <!-- alert -->
+                {% if messages %}
+                {% for messages in messages %}
+                {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+                <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href=""></a></div>
+                {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href=""></a></div>
+                {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+                <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href=""></a></div>
+                {% endif %}
+                {% endfor %}
+                {% else %}<div id="alert"></div>
+                {% endif %}
+                <!-- alert -->
+                <div class="card p-2"><!-- <div class="card shadow"> -->
+                    <div class="card-header border-0">
+                        <div class="col-md-5">
+                            <form method="POST" enctype="multipart/form-data" autocomplete="off">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="usernm" class="form-label">Username:</label>
+                                    <input class="form-control form-control-sm shadow-none" type="text" id="usernm" name="usernm" value="{{ data.username }}" readonly/>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="new_pass2" class="form-label">New Password:</label>
+                                    <input class="form-control form-control-sm shadow-none" type="password" id="new_pass1" name="passwd1" placeholder="Enter New Password" required/>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="new_pass2" class="form-label">New Password Confirmation:</label>
+                                    <input class="form-control form-control-sm shadow-none" type="password" id="new_pass2" name="passwd2" placeholder="Re-enter New Password" required/>
+                                </div>
+                                <input class="btn btn-sm btn-primary px-3" type="submit" value="Log in">
+                                <a class="btn btn-secondary btn-sm px-3" href="{% url 'EditUser' data.id %}">Cancel</a>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </div>
+</body>
+</html>

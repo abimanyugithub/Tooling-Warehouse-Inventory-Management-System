@@ -12,7 +12,9 @@
 <div class="container px-4 py-5">
     <div class="container"><p><h2>Main Menu</h2><p>
         <hr class="hr" />
+        {% if user.is_authenticated %}
         <ul class="list-group list-group-flush">
+            <li class="list-group-item"><a href="{% url 'ChangePassPageView' user.id %}">Change Password</a></li>
             <li class="list-group-item"><a href="location">Storage Location</a></li>
             <li class="list-group-item"><a href="product">Product</a></li>
             <li class="list-group-item"><a href="newline">Assign Location</a></li>
@@ -24,8 +26,11 @@
             <li class="list-group-item"><a href="{% url 'ViewLocationProduct' %}">Report Stock by Location</a></li>
             <li class="list-group-item"><a href="{% url 'ViewStockProduct' %}">Report Stock Product</a></li>
             <li class="list-group-item"><a href="{% url 'ViewLabel' %}">Create Label</a></li>
+            {% if request.user.is_superuser %}
             <li class="list-group-item"><a href="{% url 'ViewUser' %}">User Administration</a></li>
+            {% endif %}
         </ul>
+        {% endif %}
     </div>
 </div>
 </body>

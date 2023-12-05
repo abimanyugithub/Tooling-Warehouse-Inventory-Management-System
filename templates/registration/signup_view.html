@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+<body>
+    <div class="container py-5">
+        <div class="container"><p><h2 class="fw-light">{{ header }}</h2><p>
+            <hr class="hr" />
+            <form name="myForm" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <!-- alert -->
+                {% if messages %}
+                {% for messages in messages %}
+                {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+                <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'LoginPageView' %}"></a></div>
+                {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'LoginPageView' %}"></a></div>
+                {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+                <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'LoginPageView' %}"></a></div>
+                {% endif %}
+                {% endfor %}
+                {% else %}<div id="alert"></div>
+                {% endif %}
+                <!-- alert -->
+                <div class="card p-2"><!-- <div class="card shadow"> -->
+                    <div class="card-header border-0">
+                        <div class="col-md-5">
+                            <form method="POST" action="{% url 'LoginPageView' %}" enctype="multipart/form-data" autocomplete="off">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="first_name" class="form-label">Name:</label>
+                                        <input class="form-control form-control-sm shadow-none h-formfield-uppercase" type="text" id="first_name" name="first_name" placeholder="Enter Name" required autocomplete="off"/>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="usernm" class="form-label">Username:</label>
+                                    <input class="form-control form-control-sm shadow-none" style="text-transform: lowercase;" type="text" id="usernm" name="username" placeholder="Enter Username" required autocomplete="off"/>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="passwd1" class="form-label">Password:</label>
+                                    <input class="form-control form-control-sm shadow-none" type="password" id="passwd1" name="password1" placeholder="Enter Password" required/>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="passwd2" class="form-label">Password confirmation:</label>
+                                    <input class="form-control form-control-sm shadow-none" type="password" id="passwd2" name="password2" placeholder="Enter Password" required/>
+                                </div>
+                                <hr class="hr" />
+                                <label class="form-label">&nbsp;Level:</label>
+                                <div class="mb-1">
+                                    <input type="radio" id="is_superuser" name="is_superuser" value=1 />
+                                    <label for="is_superuser" class="form-label">&nbsp;SuperUser</label>
+                                </div>
+                                <div class="mb-1">
+                                    <input type="radio" id="is_staff" name="is_staff" value=1 />
+                                    <label for="is_staff" class="form-label">&nbsp;Staff</label>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="radio" id="is_std"/>
+                                    <label for="is_std" class="form-label">&nbsp;Standard</label>
+                                </div>
+                                <!-- <div class="mb-3">
+                                    <label for="dept" class="form-label">Departemen</label>
+                                    <input class="form-control form-control-sm shadow-none" type="text" id="dept" name="departement" placeholder="Departement" required autocomplete="off"/>
+                                </div> -->
+                                <input class="btn btn-sm btn-primary px-3" type="submit" value="Sign up">
+                                <a class="btn btn-secondary btn-sm px-3" href="{% url 'ViewUser' %}">Cancel</a>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+<script>
+    $(document).ready(function () {
+        $('input[type=radio]').change(function(){
+            $('input[type=radio]:checked').not(this).prop('checked', false);
+        });
+    });
+</script>
+</html>

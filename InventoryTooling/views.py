@@ -1,7 +1,7 @@
+from django.conf import settings
 from django.shortcuts import render, redirect
-from django.utils.timezone import now
-from django.views.generic import ListView, CreateView, UpdateView, DetailView, TemplateView, DeleteView
-from .models import ModelProduct, ModelLocation, ModelTempProdLoc, ModelTransaction, ModelUser
+from django.views.generic import ListView, CreateView, UpdateView, DetailView, TemplateView, DeleteView, FormView
+from .models import ModelProduct, ModelLocation, ModelTempProdLoc, ModelTransaction, ModelUserUID
 from django.urls import reverse, reverse_lazy
 from django.db.models import Q, Sum, Count, Case, When, Min, Max, F
 from django.contrib import messages
@@ -10,20 +10,36 @@ from django.forms import formset_factory, ModelForm
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from datetime import datetime, date
 from django.utils import timezone
-from django.contrib.auth.views import LoginView
-
-from django.db.models.functions import TruncDate
+from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from .forms import CustomUserCreationForm, UpdatePasswordForm
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.models import User
+from django.contrib.auth.forms import SetPasswordForm
 
 location = ModelLocation.objects.all()
 produk = ModelProduct.objects.all()
 temporary = ModelTempProdLoc.objects.all()
 transaksi = ModelTransaction.objects.all()
-users = ModelUser.objects.all()
+user_uid = ModelUserUID.objects.all()
+user_django = User.objects.all() # Model user dari default django
 title = "Tooling - "
 
 
 # Templateview, CreateView, UpdateView pakai get_context_data, listview pakai get_queryset
 # Create your views here.
+
+# view as superuser
+class SuperuserRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_superuser
+
+
+# view as staff or superuser
+class StaffRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
 
 class PageTitleViewMixin:
     # title = ""
@@ -42,40 +58,251 @@ class PageTitleViewMixin:
         context['header'] = self.get_header()
         return context
 
+# register & login logout sign up
+class SignupPageView(SuperuserRequiredMixin, PageTitleViewMixin, CreateView):
+    form_class = CustomUserCreationForm
+    #  success_url = reverse_lazy("LoginPageView")
+    template_name = "registration/signup_view.html"
+    title = title + 'Sign Up'
+    header = title
+
+    def get_success_url(self, **kwargs):
+        messages.add_message(self.request, messages.SUCCESS, "User added successfully.")
+        return reverse_lazy("ViewUser")
+
 
 class LoginPageView(PageTitleViewMixin, LoginView):
-    template_name = 'login_view.html'
-    title = title + 'Login'
+    template_name = 'registration/signin_view.html'
+    title = title + 'Sign In'
     header = title
     redirect_authenticated_user = True
 
-    def get_success_url(self):
-        return reverse_lazy('MainMenu')
+    def post(self, request, *args, **kwargs):
+        if request.method == 'POST':
+            username = request.POST.get('usernm')
+            password = request.POST.get('passwd')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                if user.is_active:
+                    login(request, user)
+                    return redirect('MainMenu')
+                else:
+                    messages.add_message(self.request, messages.ERROR, "Inactive user.")
+                    return HttpResponseRedirect(reverse('LoginPageView'))
+            else:
+                messages.add_message(self.request, messages.ERROR, "Invalid credentials.")
+                return HttpResponseRedirect(reverse('LoginPageView'))
+
+        return redirect('Dashboard')
+
+
+class LogoutPageView(LogoutView):
+    def get(self, request):
+        logout(request)
+        # return render(request, "your logout page");
+        return HttpResponseRedirect(settings.LOGOUT_REDIRECT_URL)
+
+
+class ChangePassPageView(StaffRequiredMixin, PageTitleViewMixin, FormView):
+    form_class = UpdatePasswordForm
+    title = title + 'Profile'
+    header = title + ' / ' + 'Change Password'
+    template_name = 'registration/pass_change.html'
+    model = User
+
+    def get_form_kwargs(self):
+        kwargs = super(ChangePassPageView, self).get_form_kwargs()
+        kwargs['user'] = self.request.user
+        if self.request.method == 'POST':
+            kwargs['data'] = self.request.POST
+        return kwargs
 
     def form_invalid(self, form):
-        messages.error(self.request, 'Invalid username or password')
-        return self.render_to_response(self.get_context_data(form=form))
+        messages.add_message(self.request, messages.ERROR, "Please correct the error below.")
+        return super(ChangePassPageView, self).form_invalid(form)
+
+    def form_valid(self, form):
+        form.save()
+        update_session_auth_hash(self.request, form.user)
+        # return super(ChangePassPageView, self).form_valid(form)
+        messages.add_message(self.request, messages.SUCCESS, "Your password was successfully updated!.")
+        return redirect(reverse('LogoutPageView'))
 
 
-class ViewUser(ListView):
-    template_name = 'user_list.html'
+class ResetPassPageView(PageTitleViewMixin, UpdateView):
+    template_name = 'registration/pass_reset.html'
+    title = title + 'User'
+    header = title + ' / ' + 'Reset password'
     context_object_name = 'data'
-    model = ModelUser
+    model = User
+    fields = ['username']
+
+    def post(self, request, *args, **kwargs):
+        if request.method == 'POST':
+            username = request.POST.get('usernm')
+            password1 = request.POST.get('passwd1')
+            password2 = request.POST.get('passwd2')
+            if password1 == password2:
+                this_user = User.objects.get(username=username)
+                this_user.set_password(password2)
+                this_user.save()
+                messages.add_message(self.request, messages.SUCCESS, "Your password was successfully updated!.")
+                return redirect(reverse('PageView'))
 
 
-class EditUser(UpdateView):
+class ViewUser(SuperuserRequiredMixin, PageTitleViewMixin, ListView):
+    template_name = 'registration/user_list.html'
+    title = title + 'User'
+    header = title + ' / ' + 'Accounts list'
+    context_object_name = 'object_list'
+    model = User
+    paginate_by = 5
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        total = user_django
+        active = user_django.filter(is_active=True)
+        blocked = user_django.all().filter(is_active=False)
+
+        if total:
+            context['total'] = total.count()
+            context['active'] = active.count()
+            context['blocked'] = blocked.count()
+            context['data_uid'] = user_uid
+        return context
+
+
+class ResultUser(PageTitleViewMixin, ListView):
+    template_name = 'registration/user_list.html'
+    title = title + 'User'
+    header = title + ' / ' + 'Accounts list'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        total = user_django
+        active = user_django.filter(is_active=True)
+        blocked = user_django.filter(is_active=False)
+        if total:
+            context['total'] = total.count()
+            context['active'] = active.count()
+            context['blocked'] = blocked.count()
+        return context
+
+    def get_queryset(self):  # http://shopnilsazal.github.io/django-pagination-with-basic-search/
+        posts_list = user_django
+        a = self.request.GET.get('name')
+        b = self.request.GET.get('username')
+        c = self.request.GET.get('level')
+        d = self.request.GET.get('status')
+
+        if a:
+            posts_list = user_django.filter(first_name__icontains=a)
+        elif b:
+            posts_list = user_django.filter(username__icontains=b)
+        elif c == "SUP":
+            posts_list = user_django.filter(is_superuser=True, is_staff=False)
+        elif c == "ADM":
+            posts_list = user_django.filter(is_superuser=False, is_staff=True)
+        elif c == "STD":
+            posts_list = user_django.filter(is_superuser=False, is_staff=False)
+        elif d:
+            posts_list = user_django.filter(is_active=d)
+
+        #
+        elif c == "SUP" and d:
+            posts_list = user_django.filter(is_superuser=True, is_staff=True, is_active=d)
+        elif c == "ADM" and d:
+            posts_list = user_django.filter(is_superuser=False, is_staff=True, is_active=d)
+        elif c == "STD" and d:
+            posts_list = user_django.filter(is_superuser=False, is_staff=False, is_active=d)
+
+        paginator = Paginator(posts_list, 5)  # 5 posts per page
+        page = self.request.GET.get('page')
+
+        try:
+            page_obj = paginator.page(page)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+        return page_obj
+
+
+'''class EditUser(SuperuserRequiredMixin, UpdateView):
     template_name = 'user_edit.html'
     model = ModelUser
     fields = ['qty_adj', 'status_adj', 'qty']
+    context_object_name = 'data'''''
+
+
+class EditUser(SuperuserRequiredMixin, PageTitleViewMixin, UpdateView):
+    template_name = 'registration/user_edit.html'
+    title = title + 'User'
+    header = title + ' / ' + 'Update account'
+    model = User
+    # form_class = CustomUserCreationForm
+    fields = ['first_name', 'username', 'is_superuser', 'is_staff', 'is_active']
     context_object_name = 'data'
+    success_url = reverse_lazy('ViewUser')
 
 
-class AddUser(CreateView):
-    template_name = 'user_add.html'
-    model = ModelUser
+class DeleteUser(SuperuserRequiredMixin, DeleteView):
+    model = User
+    success_url = reverse_lazy('ViewUser')
+
+# sampai sini ya view user account & registration
+
+
+# rfid uid
+class ViewUserUID(SuperuserRequiredMixin, PageTitleViewMixin, ListView):
+    template_name = 'registration/user_uid/uid_user_list.html'
+    title = title + 'User UID'
+    header = title + ' / ' + 'UID users list'
+    context_object_name = 'object_list'
+    model = ModelUserUID
+    paginate_by = 5
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        total = user_uid.filter(usernm__isnull=False)
+        active = user_uid.filter(status=True)
+        blocked = user_uid.filter(status=False)
+        if total:
+            context['total'] = total.count()
+            context['active'] = active.count()
+            context['blocked'] = blocked.count()
+        return context
+
+
+class AddUserUID(SuperuserRequiredMixin, PageTitleViewMixin, CreateView):
+    template_name = 'registration/user_uid/uid_user_add.html'
+    title = title + 'User UID'
+    header = title + ' / ' + 'Create UID user'
+    model = ModelUserUID
+    context_object_name = 'data'
+    fields = ['nik', 'nm_krywn', 'usernm', 'dept', 'level', 'uid']
+    success_url = reverse_lazy('ViewUserUID')
+
+
+'''class AddUserUID(SuperuserRequiredMixin, CreateView):
+    template_name = 'uid_user_add.html'
+    model = ModelUserUID
     context_object_name = 'data'
     fields = ['no_card', 'nik', 'nm_krywn', 'dept', 'usernm', 'passwd', 'level']
-    success_url = reverse_lazy('ViewUser')
+    success_url = reverse_lazy('ViewUser')'''
+
+
+class EditUserUID(SuperuserRequiredMixin, UpdateView):
+    template_name = 'uid_user_edit.html'
+    model = ModelUserUID
+    fields = ['nik', 'nm_krywn', 'usernm', 'dept', 'level', 'uid']
+    context_object_name = 'data'
+    success_url = reverse_lazy('ViewUserUID')
+
+
+class DeleteUserUID(SuperuserRequiredMixin, DeleteView):
+    model = ModelUserUID
+    success_url = reverse_lazy('ViewUserUID')
 
 
 class Dashboard(PageTitleViewMixin, ListView):
@@ -201,20 +428,20 @@ class Dashboard(PageTitleViewMixin, ListView):
             return context
 
         except ZeroDivisionError:
-            pass
+            return context
 
 
-class MainMenu(TemplateView):
+class MainMenu(StaffRequiredMixin, TemplateView):
     template_name = 'main_menu.html'
 
 
-class ViewLabel(PageTitleViewMixin, TemplateView):
+class ViewLabel(StaffRequiredMixin, PageTitleViewMixin, TemplateView):
     template_name = 'label_view.html'
     title = title + 'Report'
     header = title + ' / ' + 'Create label location'
 
 
-class ResultLabel(PageTitleViewMixin, ListView):
+class ResultLabel(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'label_result.html'
     title = title + 'Report'
     header = title + ' / ' + 'Create label location'
@@ -252,7 +479,7 @@ class ResultLabel(PageTitleViewMixin, ListView):
 # sampai sini ya view label
 
 # location
-class ViewLocation(PageTitleViewMixin, ListView):
+class ViewLocation(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'loc_list.html'
     title = title + 'Location'
     header = title + ' / ' + 'Locations list'
@@ -281,7 +508,7 @@ class ViewLocation(PageTitleViewMixin, ListView):
         return context
 
 
-class ResultLocation(PageTitleViewMixin, ListView):
+class ResultLocation(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'loc_list.html'
     title = title + 'Location'
     header = title + ' / ' + 'Locations list'
@@ -338,7 +565,7 @@ class ResultLocation(PageTitleViewMixin, ListView):
         return page_obj
 
 
-class AddLocation(PageTitleViewMixin, CreateView):
+class AddLocation(StaffRequiredMixin, PageTitleViewMixin, CreateView):
     template_name = 'loc_add.html'
     title = title + 'Location'
     header = title + ' / ' + 'Create a new location'
@@ -364,7 +591,7 @@ class AddLocation(PageTitleViewMixin, CreateView):
         return redirect('AddLocation')
 
 
-class EditLocation(PageTitleViewMixin, UpdateView):
+class EditLocation(StaffRequiredMixin, PageTitleViewMixin, UpdateView):
     template_name = 'loc_edit.html'
     title = title + 'Location'
     header = title + ' / ' + 'Update location'
@@ -380,7 +607,7 @@ class EditLocation(PageTitleViewMixin, UpdateView):
         return redirect('ViewLocation')
 
 
-class DeleteLocation(UpdateView):
+class DeleteLocation(StaffRequiredMixin, UpdateView):
     model = ModelLocation
     fields = ['status']
 
@@ -402,7 +629,7 @@ class DeleteLocation(UpdateView):
 # sampai sini ya view location
 
 # product
-class ViewProduct(PageTitleViewMixin, ListView):
+class ViewProduct(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'prod_list.html'
     paginate_by = 10
     title = title + 'Product'
@@ -430,15 +657,7 @@ class ViewProduct(PageTitleViewMixin, ListView):
         return context
 
 
-class DetailProduct(PageTitleViewMixin, DetailView):
-    template_name = 'prod_detail.html'
-    title = title + 'Product'
-    header = title + ' / ' + 'Detail product'
-    model = ModelProduct
-    context_object_name = 'data'
-
-
-class ResultProduct(PageTitleViewMixin, ListView):
+class ResultProduct(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'prod_list.html'
     title = title + 'Product'
     header = title + ' / ' + 'Products list'
@@ -487,7 +706,7 @@ class ResultProduct(PageTitleViewMixin, ListView):
         return context
 
 
-class AddProduct(PageTitleViewMixin, CreateView):
+class AddProduct(StaffRequiredMixin, PageTitleViewMixin, CreateView):
     template_name = 'prod_add.html'
     title = title + 'Product'
     header = title + ' / ' + ' Create a new product'
@@ -511,7 +730,7 @@ class AddProduct(PageTitleViewMixin, CreateView):
         return reverse('DetailProduct', kwargs={'pk': self.object.pk})
 
 
-class EditProduct(PageTitleViewMixin, UpdateView):
+class EditProduct(StaffRequiredMixin, PageTitleViewMixin, UpdateView):
     template_name = 'prod_edit.html'
     title = title + 'Product'
     header = title + ' / ' + 'Product update'
@@ -543,10 +762,19 @@ class EditProduct(PageTitleViewMixin, UpdateView):
         return reverse('DetailProduct', kwargs={'pk': self.object.pk})'''
 
 
+class DetailProduct(StaffRequiredMixin, PageTitleViewMixin, DetailView):
+    template_name = 'prod_detail.html'
+    title = title + 'Product'
+    header = title + ' / ' + 'Detail product'
+    model = ModelProduct
+    context_object_name = 'data'
+
+
 # sampai sini ya view product
 
-# new line
-class ViewNewline(PageTitleViewMixin, ListView):
+
+# assign location
+class ViewNewline(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'newline_list.html'
     title = title + 'Assign location'
     header = title
@@ -571,7 +799,7 @@ class ViewNewline(PageTitleViewMixin, ListView):
         return context
 
 
-class ResultNewline(PageTitleViewMixin, ListView):
+class ResultNewline(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'newline_list.html'
     title = title + 'Assign location'
     header = title
@@ -615,7 +843,7 @@ class ResultNewline(PageTitleViewMixin, ListView):
         return context
 
 
-class EditNewline(PageTitleViewMixin, UpdateView):
+class EditNewline(StaffRequiredMixin, PageTitleViewMixin, UpdateView):
     template_name = 'newline_add.html'
     title = title + 'New line'
     header = title + ' / ' + 'Add location for product'
@@ -666,7 +894,7 @@ class EditNewline(PageTitleViewMixin, UpdateView):
         return HttpResponseRedirect(reverse('EditNewline', kwargs={'pk': self.object.pk}))
 
 
-class DeleteNewline(UpdateView):
+class DeleteNewline(StaffRequiredMixin, UpdateView):
     model = ModelTempProdLoc
     fields = ['remark']
 
@@ -689,9 +917,10 @@ class DeleteNewline(UpdateView):
 # sampai sini ya view New Line
 
 # transfer / stock move
-class ViewTransfer(PageTitleViewMixin, TemplateView):  # bug belum nemu cara tampil primary 0 tapi ada reserve
+class ViewTransfer(StaffRequiredMixin, PageTitleViewMixin,
+                   TemplateView):  # bug belum nemu cara tampil primary 0 tapi ada reserve
     template_name = 'tf_view.html'
-    title = title + 'Stock Move'
+    title = title + 'Stock Transfer'
     header = title
 
     def get_context_data(self, **kwargs):
@@ -716,9 +945,9 @@ class ViewTransfer(PageTitleViewMixin, TemplateView):  # bug belum nemu cara tam
         return context
 
 
-class ResultTransfer(PageTitleViewMixin, ListView):
+class ResultTransfer(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'tf_view.html'
-    title = title + 'Stock Move'
+    title = title + 'Stock Transfer'
     header = title
 
     '''def get_queryset(self):
@@ -758,7 +987,7 @@ class ResultTransfer(PageTitleViewMixin, ListView):
         return page_obj
 
 
-class UpdateTransfer(PageTitleViewMixin, UpdateView):
+class UpdateTransfer(StaffRequiredMixin, PageTitleViewMixin, UpdateView):
     template_name = 'tf_update.html'
     title = title + 'Stock Move'
     header = title + ' / ' + 'Transfer stock'
@@ -936,7 +1165,7 @@ class UpdateTransfer(PageTitleViewMixin, UpdateView):
 # proses-proses adjustment
 
 # TTB adjustment
-class ViewReceiving(PageTitleViewMixin, TemplateView):
+class ViewReceiving(StaffRequiredMixin, PageTitleViewMixin, TemplateView):
     template_name = 'receive_list.html'
     title = title + 'Inbound'
     header = title
@@ -950,7 +1179,7 @@ class ViewReceiving(PageTitleViewMixin, TemplateView):
         return object_list'''
 
 
-class ResultReceiving(PageTitleViewMixin, ListView):
+class ResultReceiving(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'receive_list.html'
     title = title + 'Inbound'
     header = title
@@ -988,7 +1217,7 @@ class FormTransaction(ModelForm):
                   'qty_adj', 'qty_afr']
 
 
-class AddReceiving(PageTitleViewMixin,
+class AddReceiving(StaffRequiredMixin, PageTitleViewMixin,
                    CreateView):  # bug invalid literal for int() with base 10: '' kalau langsung submit
     # fungsi self.form_valid(...)  adalah save
     template_name = 'receive_add.html'
@@ -1050,7 +1279,7 @@ class AddReceiving(PageTitleViewMixin,
             return redirect('AddReceiving')
 
 
-class UpdateReceiving(PageTitleViewMixin, UpdateView):
+class UpdateReceiving(StaffRequiredMixin, PageTitleViewMixin, UpdateView):
     template_name = 'receive_update.html'
     title = title + 'Inbound'
     header = title + ' / ' + 'Receipt update'
@@ -1149,7 +1378,7 @@ class ViewPicking(PageTitleViewMixin, TemplateView):
 class ResultPicking(PageTitleViewMixin, ListView):
     template_name = 'pick_list.html'
     title = title + 'Picking'
-    header = title + ' / ' + 'Pick list'
+    header = title
 
     def get_queryset(self):  # http://shopnilsazal.github.io/django-pagination-with-basic-search/
         posts_list = temporary
@@ -1166,7 +1395,7 @@ class ResultPicking(PageTitleViewMixin, ListView):
             posts_list = temporary.filter(Q(prod_code__prod_desc__icontains=b), remark="LOC", no_loc__assign="P",
                                           no_loc__status="UL")
         elif c:
-            posts_list = temporary.filter(Q(no_loc__no_loc__icontains=b), remark="LOC", no_loc__assign="P",
+            posts_list = temporary.filter(Q(no_loc__no_loc__icontains=c), remark="LOC", no_loc__assign="P",
                                           no_loc__status="UL")
 
         paginator = Paginator(posts_list, 10)  # 10 posts per page
@@ -1221,7 +1450,7 @@ class UpdatePicking(PageTitleViewMixin, UpdateView):
             get = temporary.filter(id=id)
             # getusr = users.filter(card_number=auth)
 
-            if users.filter(no_card=auth):
+            if user_uid.filter(uid=auth):
                 for e in get:
                     if opsi == 'AO':  # adjust. out
                         if int(adj_qty) == 0:  # (opsional) di front end inputnya sudah diberi min=1
@@ -1272,13 +1501,13 @@ class UpdatePicking(PageTitleViewMixin, UpdateView):
                     return HttpResponseRedirect(reverse('UpdatePicking', kwargs={'pk': id}))
             else:
                 messages.add_message(self.request, messages.ERROR, "Access denied.")
-                #return HttpResponseRedirect(reverse('UpdatePicking', kwargs={'pk': id}))
+                # return HttpResponseRedirect(reverse('UpdatePicking', kwargs={'pk': id}))
 
 
 # sampai sini ya view picking
 
 # stockopname adjustment
-class ViewStockOpname(PageTitleViewMixin, ListView):
+class ViewStockOpname(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'sto_list.html'
     title = title + 'STO'
     header = title + ' / ' + 'STO location'
@@ -1326,7 +1555,7 @@ class ViewStockOpname(PageTitleViewMixin, ListView):
         return context
 
 
-class ResultStockOpname(PageTitleViewMixin, ListView):
+class ResultStockOpname(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'sto_update.html'
     title = title + 'STO'
     header = title + ' / ' + 'STO adjustment'
@@ -1337,7 +1566,7 @@ class ResultStockOpname(PageTitleViewMixin, ListView):
         return object_list
 
 
-class UpdateStockOpname(UpdateView):
+class UpdateStockOpname(StaffRequiredMixin, UpdateView):
     model = ModelTempProdLoc
     fields = ['qty']
 
@@ -1423,13 +1652,13 @@ class UpdateStockOpname(UpdateView):
 
 
 # "chk" u/ sudah dicek (checked), "pnd" u/ sudah dicek tapi pending
-class ConfirmStockOpname(UpdateView):
+class ConfirmStockOpname(StaffRequiredMixin, UpdateView):
     model = ModelLocation
     fields = ['sto_check']
     success_url = reverse_lazy('ViewStockOpname')
 
 
-class AddRsvStockOpname(PageTitleViewMixin, UpdateView):
+class AddRsvStockOpname(StaffRequiredMixin, PageTitleViewMixin, UpdateView):  # menambah stok di reserve
     template_name = 'sto_rsv_add.html'
     title = title + 'STO'
     header = title + ' / ' + 'STO reserve location'
@@ -1456,7 +1685,7 @@ class AddRsvStockOpname(PageTitleViewMixin, UpdateView):
         return redirect(reverse('ResultStockOpname') + '?q=' + b)
 
 
-class RemoveCheckStockOpname(UpdateView):
+class RemoveCheckStockOpname(StaffRequiredMixin, UpdateView):  # menghapus marking yang sudah di cek tabel sto
     def post(self, request, *args, **kwargs):
         if "clear" in request.POST:
             location.update(sto_check=None)
@@ -1468,7 +1697,7 @@ class RemoveCheckStockOpname(UpdateView):
 
 
 # record - record
-class ViewAdjustmentRecord(PageTitleViewMixin, ListView):
+class ViewAdjustmentRecord(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'record_adj.html'
     title = title + 'Report'
     header = title + ' / ' + 'Report movement'
@@ -1479,7 +1708,7 @@ class ViewAdjustmentRecord(PageTitleViewMixin, ListView):
         return object_list
 
 
-class ResultAdjustmentRecord(PageTitleViewMixin, ListView):
+class ResultAdjustmentRecord(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'record_adj.html'
     title = title + 'Report'
     header = title + ' / ' + 'Report movement'
@@ -1528,7 +1757,7 @@ class ResultAdjustmentRecord(PageTitleViewMixin, ListView):
         # return object_list
 
 
-class ViewLocationProduct(PageTitleViewMixin, ListView):
+class ViewLocationProduct(StaffRequiredMixin, PageTitleViewMixin, ListView):
     # class ViewLocationProduct(TemplateView):
     template_name = 'record_loc.html'
     title = title + 'Report'
@@ -1545,7 +1774,7 @@ class ViewLocationProduct(PageTitleViewMixin, ListView):
         return context
 
 
-class ResultLocationProduct(PageTitleViewMixin, ListView):
+class ResultLocationProduct(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'record_loc.html'
     title = title + 'Report'
     header = title + ' / ' + 'Product by location'
@@ -1597,7 +1826,7 @@ class ResultLocationProduct(PageTitleViewMixin, ListView):
         return context
 
 
-class ViewStockProduct(PageTitleViewMixin, ListView):
+class ViewStockProduct(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'record_stock.html'
     title = title + 'Report'
     header = title + ' / ' + 'Stock product'
@@ -1610,7 +1839,7 @@ class ViewStockProduct(PageTitleViewMixin, ListView):
         return object_list
 
 
-class ResultStockProduct(PageTitleViewMixin, ListView):
+class ResultStockProduct(StaffRequiredMixin, PageTitleViewMixin, ListView):
     template_name = 'record_stock.html'
     title = title + 'Report'
     header = title + ' / ' + 'Stock product'

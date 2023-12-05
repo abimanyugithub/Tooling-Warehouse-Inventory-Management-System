@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <title>{{ title }}</title>
+    <style>
+    .h-formfield-uppercase input {
+      text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+    </style>
+<body>
+    <div class="container py-5">
+        <div class="container"><p><h2 class="fw-light">{{ header }}</h2><p>
+            <hr class="hr" />
+            <form name="myForm" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <!-- alert -->
+                {% if messages %}
+                {% for messages in messages %}
+                {% if messages.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+                <div class="alert alert-success border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'LoginPageView' %}"></a></div>
+                {% elif messages.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                <div class="alert alert-danger border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'LoginPageView' %}"></a></div>
+                {% elif messages.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+                <div class="alert alert-warning border-0 alert-dismissible fade show" role="alert">{{ messages }}
+                    <a class="btn-close" aria-label="Close" href="{% url 'LoginPageView' %}"></a></div>
+                {% endif %}
+                {% endfor %}
+                {% else %}<div id="alert"></div>
+                {% endif %}
+                <!-- alert -->
+                <div class="card p-2"><!-- <div class="card shadow"> -->
+                    <div class="card-header border-0">
+                        <div class="col-md-5">
+                            <form name="myForm" method="POST" enctype="multipart/form-data" autocomplete="off">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="nik" class="form-label">NIK:</label>
+                                        <input class="form-control form-control-sm shadow-none h-formfield-uppercase" onkeypress="return isNumberKey(event)" type="number" id="nik" name="nik" placeholder="Enter Employee NIK" required autocomplete="off" />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Name:</label>
+                                    <input class="form-control form-control-sm shadow-none" style="text-transform: lowercase;" type="text" id="name" name="nm_krywn" placeholder="Enter Employee Name" required autocomplete="off"/>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="usernm" class="form-label">Username:</label>
+                                    <input class="form-control form-control-sm shadow-none" style="text-transform: lowercase;" type="text" id="usernm" name="usernm" placeholder="Enter Username" required autocomplete="off"/>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="dept" class="form-label">Departement:</label>
+                                    <select class="form-select form-select-sm shadow-none" id="dept" name="dept">
+                                            <option disabled>{{ value|default:"---" }}</option>
+                                            <option value="IT">IT</option>
+                                            <option value="MTC">MAINTENANCE</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="level" class="form-label">Level:</label>
+                                    <select class="form-select form-select-sm shadow-none" id="level" name="level">
+                                        <option disabled>{{ value|default:"---" }}</option>
+                                        <option value="ADM">ADMINISTRATOR</option>
+                                        <option value="STD">STANDARD</option>
+                                    </select>
+                                </div>
+                                <!-- <div class="mb-3">
+                                    <label for="uid" class="form-label">Username:</label>
+                                    <input class="form-control form-control-sm shadow-none" type="number" id="uid" name="uid" placeholder="Enter UID" required autocomplete="off"/>
+                                </div> -->
+                                <a class="btn btn-primary btn-sm px-2" onclick="return validateForm()">Submit</a>
+                                <!-- <button type="submit">Submit</button> -->
+                                <a class="btn btn-secondary btn-sm px-3" href="{% url 'ViewUserUID' %}">Cancel</a>
+
+                            <!-- Modal -->
+                                <div class="modal fade" id="id-modal" tabindex="-1" aria-labelledby="exampleModalLabel2" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h1 class="modal-title fs-5" id="exampleModalLabel2"><i class="fa fa-info-circle" style="color:#243c64;"></i>
+                                                                    &nbsp;Authorization</h1>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Silahkan tempelkan kartu pada <strong>Card Reader RFID</strong>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <input class="form-control form-control-sm shadow-none" id="uid" onchange="closeModal()" name="uid" type="text" autofocus autocomplete="off"/>
+                                                <button class="btn btn-primary btn-sm px-2" id="bt-submit" type="submit">Submit</button>
+                                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Modal -->
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+<script>
+function validateForm() {
+    if ($("#nik").val() == "" || $("#name").val() == "" || $("#usernm").val() == ""){
+        $("#alert").html("<div class='alert alert-warning border-0' role='alert'>Fill the form to be submitted.</div>");
+        return false;
+    } else {
+        $("#id-modal").modal('show'); // tampilkan modal jika form valid
+        $("#bt-submit").hide(); // hide btn submit
+    }
+}
+</script>
+<script>
+// fungsi focus input
+$('#id-modal').on('shown.bs.modal', function() {
+    $('#uid').focus().val('').end();
+})
+</script>
+
+<script>
+// fungsi input only number
+function isNumberKey(evt) {
+    var charCode = (evt.which) ? evt.which : evt.keyCode
+    if (charCode > 31 && (charCode < 48 || charCode > 57))
+    return false;
+    return true;
+}
+</script>
+<script>
+// fungsi close modal saat onchange
+function closeModal() {
+   $('#id-modal').modal('toggle');
+}
+</script>
+</html>
